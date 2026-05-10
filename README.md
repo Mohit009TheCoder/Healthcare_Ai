@@ -30,7 +30,7 @@ A Flask-based web application for predicting diabetes, heart disease, and diagno
 
 ### 📈 Dashboard Visualizations
 
-The dashboard now includes **12 comprehensive charts**:
+The dashboard includes **12 comprehensive charts**:
 
 1. **Disease Sample Distribution** - Top 15 diseases by frequency
 2. **Top 15 Most Common Symptoms** - Symptom frequency analysis
