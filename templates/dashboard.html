@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="badge badge-cyan">Analytics</div>
+  <h1 class="page-title mt-1">Healthcare Analytics Dashboard</h1>
+  <p class="page-subtitle">Interactive visualisations across all datasets — symptom patterns, glucose profiles, risk factors, drug ratings, and ensemble model benchmarks.</p>
+</div>
+
+<div class="section-gap" style="padding-top:0;display:grid;gap:1.5rem">
+
+  <!-- Section 1: Disease & Symptom Analysis -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+    <div class="card">
+      <div class="card-title">Disease Sample Distribution</div>
+      <div data-chart='{{ charts.disease_dist | tojson }}' style="height:400px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Top 15 Most Common Symptoms</div>
+      <div data-chart='{{ charts.sym_heatmap | tojson }}' style="height:400px"></div>
+    </div>
+  </div>
+
+  <!-- Section 2: Diabetes Analysis -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+    <div class="card">
+      <div class="card-title">Glucose Level by Diabetes Diagnosis</div>
+      <div data-chart='{{ charts.glucose_dist | tojson }}' style="height:400px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Age Distribution by Diabetes</div>
+      <div data-chart='{{ charts.age_violin | tojson }}' style="height:400px"></div>
+    </div>
+  </div>
+
+  <!-- Section 3: Heart Disease & Correlation -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+    <div class="card">
+      <div class="card-title">Heart Disease Risk Factors</div>
+      <div data-chart='{{ charts.heart_risk | tojson }}' style="height:400px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">BMI vs Glucose Level</div>
+      <div data-chart='{{ charts.bmi_glucose | tojson }}' style="height:400px"></div>
+    </div>
+  </div>
+
+  <!-- Section 4: Drug Analysis & Basic Model Performance -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+    <div class="card">
+      <div class="card-title">Drug Rating Distribution (Top 10)</div>
+      <div data-chart='{{ charts.drug_rating | tojson }}' style="height:400px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Model Accuracy — Ensemble vs Single</div>
+      <div data-chart='{{ charts.model_acc | tojson }}' style="height:400px"></div>
+    </div>
+  </div>
+
+  <!-- NEW Section 5: Advanced Model Comparison -->
+  <div style="margin-top:2rem">
+    <h2 style="color:#00d4ff;font-size:1.5rem;margin-bottom:1rem;font-weight:600">🎯 Advanced Model Performance Analysis</h2>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+    <div class="card">
+      <div class="card-title">Model Performance Metrics Comparison</div>
+      <div data-chart='{{ charts.model_comparison | tojson }}' style="height:450px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Prediction Confidence Distribution</div>
+      <div data-chart='{{ charts.confidence_dist | tojson }}' style="height:450px"></div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+    <div class="card">
+      <div class="card-title">Top 5 Feature Importance by Model</div>
+      <div data-chart='{{ charts.feature_importance | tojson }}' style="height:450px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Dataset Sizes</div>
+      <div data-chart='{{ charts.dataset_sizes | tojson }}' style="height:450px"></div>
+    </div>
+  </div>
+
+  <!-- Model Performance Summary Cards -->
+  <div style="margin-top:2rem">
+    <h2 style="color:#00d4ff;font-size:1.5rem;margin-bottom:1rem;font-weight:600">📊 Model Performance Summary</h2>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem">
+    <div class="card" style="background:linear-gradient(135deg,rgba(0,212,255,0.1),rgba(0,212,255,0.05))">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
+        <div style="width:50px;height:50px;border-radius:12px;background:rgba(0,212,255,0.2);display:flex;align-items:center;justify-content:center;font-size:1.5rem">🩺</div>
+        <div>
+          <div style="font-size:0.875rem;color:#94a3b8">Diabetes Model</div>
+          <div style="font-size:1.5rem;font-weight:700;color:#00d4ff">99.8%</div>
+        </div>
+      </div>
+      <div style="font-size:0.875rem;color:#cbd5e1;line-height:1.6">
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+          <span>Precision:</span><strong style="color:#00ff9d">99.8%</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+          <span>Recall:</span><strong style="color:#00ff9d">99.7%</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span>F1-Score:</span><strong style="color:#00ff9d">99.8%</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="background:linear-gradient(135deg,rgba(255,77,109,0.1),rgba(255,77,109,0.05))">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
+        <div style="width:50px;height:50px;border-radius:12px;background:rgba(255,77,109,0.2);display:flex;align-items:center;justify-content:center;font-size:1.5rem">❤️</div>
+        <div>
+          <div style="font-size:0.875rem;color:#94a3b8">Heart Disease Model</div>
+          <div style="font-size:1.5rem;font-weight:700;color:#ff4d6d">100%</div>
+        </div>
+      </div>
+      <div style="font-size:0.875rem;color:#cbd5e1;line-height:1.6">
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+          <span>Precision:</span><strong style="color:#00ff9d">100%</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+          <span>Recall:</span><strong style="color:#00ff9d">100%</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span>F1-Score:</span><strong style="color:#00ff9d">100%</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="background:linear-gradient(135deg,rgba(0,255,157,0.1),rgba(0,255,157,0.05))">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
+        <div style="width:50px;height:50px;border-radius:12px;background:rgba(0,255,157,0.2);display:flex;align-items:center;justify-content:center;font-size:1.5rem">🔬</div>
+        <div>
+          <div style="font-size:0.875rem;color:#94a3b8">Symptom Model</div>
+          <div style="font-size:1.5rem;font-weight:700;color:#00ff9d">100%</div>
+        </div>
+      </div>
+      <div style="font-size:0.875rem;color:#cbd5e1;line-height:1.6">
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+          <span>Precision:</span><strong style="color:#00ff9d">100%</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+          <span>Recall:</span><strong style="color:#00ff9d">99.9%</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span>F1-Score:</span><strong style="color:#00ff9d">100%</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

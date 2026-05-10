@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <p class="hero-eyebrow">AI-Powered Healthcare Intelligence</p>
+  <h1 class="hero-title">MediAI Personalized<br/>Recommendation System</h1>
+  <p class="hero-subtitle">
+    Ensemble ML — RandomForest + Naive Bayes + Logistic Regression — trained on the
+    DiseaseAndSymptoms dataset ({{ stats.symptoms }} symptoms, {{ stats.diseases }} diseases)
+    plus clinical datasets for diabetes and heart disease.
+  </p>
+  <div class="hero-actions">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">View Dashboard →</a>
+    <a href="{{ url_for('predict_symptoms') }}" class="btn btn-outline">Symptom Analysis</a>
+  </div>
+</section>
+
+<div class="container">
+  <div class="pipeline">
+    <div class="pipeline-step">Raw Data</div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step">Feature Eng.</div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step">Ensemble ML</div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step">Precautions</div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step">Drug Recs</div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step">Insights</div>
+  </div>
+</div>
+
+<div class="section-gap">
+  <div class="stats-grid">
+    <div class="stat-card stat-accent--cyan">
+      <div class="stat-icon">🩺</div>
+      <div class="stat-value mono" data-count="{{ stats.diabetes_records }}">0</div>
+      <div class="stat-label">Diabetes Records</div>
+    </div>
+    <div class="stat-card stat-accent--red">
+      <div class="stat-icon">❤️</div>
+      <div class="stat-value mono" data-count="{{ stats.heart_records }}">0</div>
+      <div class="stat-label">Heart Disease Records</div>
+    </div>
+    <div class="stat-card stat-accent--green">
+      <div class="stat-icon">💊</div>
+      <div class="stat-value mono" data-count="{{ stats.drug_records }}">0</div>
+      <div class="stat-label">Drug Reviews</div>
+    </div>
+    <div class="stat-card stat-accent--yellow">
+      <div class="stat-icon">🌍</div>
+      <div class="stat-value mono" data-count="{{ stats.world_records }}">0</div>
+      <div class="stat-label">World Disease Records</div>
+    </div>
+    <div class="stat-card stat-accent--purple">
+      <div class="stat-icon">🦠</div>
+      <div class="stat-value mono" data-count="{{ stats.diseases }}">0</div>
+      <div class="stat-label">Unique Diseases</div>
+    </div>
+    <div class="stat-card stat-accent--cyan">
+      <div class="stat-icon">🧬</div>
+      <div class="stat-value mono" data-count="{{ stats.symptoms }}">0</div>
+      <div class="stat-label">Symptom Features</div>
+    </div>
+    <div class="stat-card stat-accent--red">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-value mono">{{ stats.world_acc }}%</div>
+      <div class="stat-label">Symptom Model Acc.</div>
+    </div>
+    <div class="stat-card stat-accent--green">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-value mono">{{ stats.diab_acc }}%</div>
+      <div class="stat-label">Diabetes Model Acc.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-gap">
+  <h2 class="section-title">System Capabilities</h2>
+  <div class="features-grid">
+    <a href="{{ url_for('predict_symptoms') }}" class="feature-card feature-card--purple">
+      <div class="feature-icon">🔍</div>
+      <div>
+        <div class="feature-title">Symptom-Based Diagnosis</div>
+        <div class="feature-desc">Select from {{ stats.symptoms }} medically-validated symptoms. Ensemble model (RF + NB + LR) trained on 4,920 records across {{ stats.diseases }} disease classes. Includes disease precautions.</div>
+      </div>
+      <div class="feature-arrow">Analyze symptoms →</div>
+    </a>
+    <a href="{{ url_for('predict_diabetes') }}" class="feature-card feature-card--cyan">
+      <div class="feature-icon">🩸</div>
+      <div>
+        <div class="feature-title">Diabetes Prediction</div>
+        <div class="feature-desc">Predict diabetes risk using glucose, BMI, insulin, blood pressure and 7 additional clinical features. Random Forest with 200 estimators.</div>
+      </div>
+      <div class="feature-arrow">Predict now →</div>
+    </a>
+    <a href="{{ url_for('predict_heart') }}" class="feature-card feature-card--red">
+      <div class="feature-icon">❤️</div>
+      <div>
+        <div class="feature-title">Heart Disease Prediction</div>
+        <div class="feature-desc">Assess cardiovascular risk from cholesterol, blood pressure, and lifestyle factors using Gradient Boosting classifier.</div>
+      </div>
+      <div class="feature-arrow">Assess risk →</div>
+    </a>
+    <a href="{{ url_for('recommend_drug') }}" class="feature-card feature-card--green">
+      <div class="feature-icon">💊</div>
+      <div>
+        <div class="feature-title">Drug Recommender</div>
+        <div class="feature-desc">Content-based filtering with TF-IDF + cosine similarity to recommend top-rated medications by diagnosis and risk level.</div>
+      </div>
+      <div class="feature-arrow">Get recommendations →</div>
+    </a>
+    <a href="{{ url_for('dashboard') }}" class="feature-card feature-card--cyan">
+      <div class="feature-icon">📊</div>
+      <div>
+        <div class="feature-title">Analytics Dashboard</div>
+        <div class="feature-desc">Interactive visualisations: symptom heatmaps, glucose profiles, risk factor analysis, and ensemble vs single-model benchmarks.</div>
+      </div>
+      <div class="feature-arrow">Open dashboard →</div>
+    </a>
+  </div>
+</div>
+
+<div class="section-gap">
+  <div class="card">
+    <div class="card-title">ML Architecture — What Changed in v3.0</div>
+    <div class="form-grid mt-2" style="gap:1rem">
+      <div>
+        <div class="badge badge-purple" style="margin-bottom:.5rem">Symptom Model (FIXED)</div>
+        <p class="text-2" style="font-size:.85rem;line-height:1.6">
+          Previously used the world disease dataset (wrong data). Now uses <strong>DiseaseAndSymptoms.csv</strong>
+          (4,920 records, {{ stats.diseases }} diseases, {{ stats.symptoms }} binary symptom features)
+          with a <strong>soft-voting ensemble</strong> (RandomForest + Naive Bayes + Logistic Regression).
+          Also now shows disease-specific <strong>precautions</strong> after every diagnosis.
+        </p>
+      </div>
+      <div>
+        <div class="badge badge-cyan" style="margin-bottom:.5rem">Diabetes Model</div>
+        <p class="text-2" style="font-size:.85rem;line-height:1.6">Random Forest (200 trees, max_depth=10) on 11 clinical features. StandardScaler preprocessing, 80/20 split. Precautions now shown for positive results.</p>
+      </div>
+      <div>
+        <div class="badge badge-green" style="margin-bottom:.5rem">Drug Recommendation</div>
+        <p class="text-2" style="font-size:.85rem;line-height:1.6">Content-based filtering using TF-IDF (500 features) on disease+effectiveness+side_effects+risk_level. Rating-weighted ranking. Triggered automatically after symptom diagnosis.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

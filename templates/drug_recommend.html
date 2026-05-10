@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Drug Recommender{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="badge badge-green">Drug Recommender</div>
+  <h1 class="page-title mt-1">Medication Recommendation Engine</h1>
+  <p class="page-subtitle">Content-based filtering with TF-IDF and rating-weighted ranking to recommend the best medications by disease and risk level.</p>
+</div>
+
+<div class="section-gap" style="padding-top:0">
+  <div style="display:grid;grid-template-columns:{% if result %}1fr 1.3fr{% else %}1fr{% endif %};gap:2rem;align-items:start">
+
+    <div class="card">
+      <form method="POST" action="{{ url_for('recommend_drug') }}">
+        <div class="card-title">Patient Profile</div>
+        <div class="form-grid mt-3" style="grid-template-columns:1fr">
+          <div class="field">
+            <label class="label">Disease / Condition</label>
+            <select name="disease" class="input" required>
+              <option value="" disabled selected>Select a disease...</option>
+              {% for d in diseases %}
+              <option value="{{ d }}" {% if result and result.disease == d %}selected{% endif %}>{{ d }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label class="label">Risk Level</label>
+            <select name="risk_level" class="input">
+              {% for r in risk_levels %}
+              <option value="{{ r }}" {% if result and result.risk_level == r %}selected{% endif %}>{{ r }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label class="label">Age</label>
+            <input type="number" name="age" class="input" placeholder="e.g. 35" min="1" max="120" value="{{ result.age if result else '' }}"/>
+          </div>
+          <div class="field">
+            <label class="label">Gender</label>
+            <select name="gender" class="input">
+              <option value="Unknown">Prefer not to say</option>
+              <option value="Male" {% if result and result.gender == 'Male' %}selected{% endif %}>Male</option>
+              <option value="Female" {% if result and result.gender == 'Female' %}selected{% endif %}>Female</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-4" style="width:100%;justify-content:center;background:linear-gradient(135deg,#00ff9d,#008f56)">
+          Get Recommendations
+        </button>
+      </form>
+    </div>
+
+    {% if result %}
+    <div style="display:flex;flex-direction:column;gap:1.25rem">
+
+      <div class="card" style="border-color:rgba(0,255,157,0.25);background:rgba(0,255,157,0.04)">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
+          <div>
+            <div class="card-title" style="color:var(--success);margin-bottom:.2rem">{{ result.disease }}</div>
+            <div style="font-size:.82rem;color:var(--text-2)">Risk: <strong>{{ result.risk_level }}</strong> · {{ result.total_reviews }} reviews · Avg rating: <strong>{{ result.avg_rating }}/10</strong></div>
+          </div>
+        </div>
+      </div>
+
+      {% if result.chart %}
+      <div class="card">
+        <div class="card-title" style="font-size:.88rem">Medication Rating Comparison</div>
+        <div data-chart='{{ result.chart | tojson }}'></div>
+      </div>
+      {% endif %}
+
+      <div>
+        <div class="section-title">Top Recommended Medications</div>
+        <div style="display:grid;gap:.75rem;margin-top:.75rem">
+          {% for d in result.recommendations %}
+          <div class="drug-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem">
+              <div class="drug-name">{{ d.medicine_name }}</div>
+              <div style="text-align:right">
+                <div class="drug-stars">{{ "%.1f"|format(d.avg_rating) }}/10</div>
+                {% if d.doctor_rec > 0.5 %}
+                <div style="font-size:.72rem;color:var(--success);margin-top:.15rem">Doctor Recommended</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="drug-meta">
+              <div class="drug-meta-row"><span class="drug-meta-key">Effectiveness</span><span class="drug-meta-val">{{ d.effectiveness }}</span></div>
+              <div class="drug-meta-row"><span class="drug-meta-key">Side Effects</span><span class="drug-meta-val">{{ d.side_effects }}</span></div>
+            </div>
+          </div>
+          {% else %}
+          <div class="card" style="text-align:center;padding:2rem;background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.1)">
+            <div style="font-size:2rem;margin-bottom:1rem">💊</div>
+            <p style="color:var(--text);margin-bottom:0.5rem">No specific recommendations found for this profile.</p>
+            <p style="font-size:0.8rem;color:var(--text-2)">Try adjusting the risk level or consulting a healthcare professional.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

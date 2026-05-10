@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chart Test</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <style>
+    body {
+      background: #060a14;
+      color: #e2e8f0;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .chart-container {
+      background: #0d1424;
+      border: 1px solid rgba(0,212,255,0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Chart Rendering Test</h1>
+  
+  <div class="chart-container">
+    <h2>Test Chart 1: Glucose Distribution</h2>
+    <div id="chart1" style="height:400px"></div>
+  </div>
+
+  <div class="chart-container">
+    <h2>Test Chart 2: Age Violin</h2>
+    <div id="chart2" style="height:400px"></div>
+  </div>
+
+  <script>
+    console.log('Plotly version:', Plotly.version);
+    
+    // Test 1: Simple histogram
+    const trace1 = {
+      x: [208, 182, 233, 171, 158, 86, 246, 245, 166, 141],
+      type: 'histogram',
+      name: 'Diabetes',
+      marker: { color: '#ff4d6d' },
+      opacity: 0.75,
+      nbinsx: 30
+    };
+    
+    const trace2 = {
+      x: [109, 98, 118, 70, 129, 95, 88, 102, 115, 91],
+      type: 'histogram',
+      name: 'No Diabetes',
+      marker: { color: '#00ff9d' },
+      opacity: 0.75,
+      nbinsx: 30
+    };
+    
+    const layout1 = {
+      title: 'Glucose Level Distribution',
+      barmode: 'overlay',
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      font: { color: '#e2e8f0' },
+      xaxis: { title: 'Glucose Level', color: '#e2e8f0' },
+      yaxis: { title: 'Count', color: '#e2e8f0' }
+    };
+    
+    Plotly.newPlot('chart1', [trace1, trace2], layout1, { responsive: true })
+      .then(() => console.log('Chart 1 rendered successfully'))
+      .catch(err => console.error('Chart 1 error:', err));
+    
+    // Test 2: Violin plot
+    const trace3 = {
+      y: [42, 60, 48, 52, 55, 38, 45, 50, 62, 58],
+      type: 'violin',
+      name: 'Diabetes',
+      box: { visible: true },
+      meanline: { visible: true },
+      fillcolor: '#ff4d6d',
+      opacity: 0.6,
+      line: { color: '#ff4d6d' }
+    };
+    
+    const trace4 = {
+      y: [35, 28, 40, 33, 45, 38, 42, 36, 44, 39],
+      type: 'violin',
+      name: 'No Diabetes',
+      box: { visible: true },
+      meanline: { visible: true },
+      fillcolor: '#00ff9d',
+      opacity: 0.6,
+      line: { color: '#00ff9d' }
+    };
+    
+    const layout2 = {
+      title: 'Age Distribution',
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      font: { color: '#e2e8f0' },
+      yaxis: { title: 'Age', color: '#e2e8f0' }
+    };
+    
+    Plotly.newPlot('chart2', [trace3, trace4], layout2, { responsive: true })
+      .then(() => console.log('Chart 2 rendered successfully'))
+      .catch(err => console.error('Chart 2 error:', err));
+  </script>
+</body>
+</html>

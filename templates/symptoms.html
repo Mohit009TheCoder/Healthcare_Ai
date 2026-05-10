@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}Symptom Analysis{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="badge badge-purple">Symptom Analysis</div>
+  <h1 class="page-title mt-1">AI Disease Prediction from Symptoms</h1>
+  <p class="page-subtitle">Powered by an ensemble of RandomForest + Naive Bayes + Logistic Regression trained on {{ symptom_map|length }} unique symptoms across 41 diseases. Select 3–5+ symptoms for best accuracy.</p>
+</div>
+
+<div class="section-gap" style="padding-top:0">
+  <div style="display:grid;grid-template-columns:{% if result %}1.1fr 0.9fr{% else %}1fr{% endif %};gap:2rem;align-items:start">
+
+    <!-- Symptom Selection Form -->
+    <div class="card">
+      <form method="POST" action="{{ url_for('predict_symptoms') }}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div class="card-title" style="margin-bottom:0">Select Your Symptoms</div>
+          <span id="symptom-count" class="badge badge-cyan">0 selected</span>
+        </div>
+
+        <div class="alert-box alert-box--info" style="margin-bottom:1rem;font-size:.82rem">
+          Select at least 3–5 symptoms for best accuracy. Click a symptom to toggle it on or off.
+        </div>
+
+        <!-- Search filter -->
+        <div style="margin-bottom:1rem">
+          <input type="text" id="symptom-search" placeholder="Search symptoms..." autocomplete="off"
+                 style="width:100%;padding:.55rem .9rem;background:rgba(0,212,255,0.05);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:.85rem;outline:none"/>
+        </div>
+
+        <div class="symptom-grid" id="symptom-grid">
+          {% for key, label in symptom_map %}
+          <label class="symptom-item" id="si-{{ key }}" data-label="{{ label|lower }}">
+            <input type="checkbox" name="symptoms" value="{{ key }}"
+                   {% if result and result.get('matched') and label in result.matched %}checked{% endif %}/>
+            <span class="symptom-dot"></span>
+            <span class="symptom-label">{{ label }}</span>
+          </label>
+          {% endfor %}
+        </div>
+
+        <div class="mt-4" style="display:flex;gap:.75rem">
+          <button type="button" id="clear-all" class="btn btn-secondary" style="flex:1;justify-content:center">
+            Clear All
+          </button>
+          <button type="submit" class="btn btn-primary" style="flex:2;justify-content:center;background:linear-gradient(135deg,#a78bfa,#7c3aed)">
+            Predict Disease
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Results Panel -->
+    {% if result %}
+    <div style="display:flex;flex-direction:column;gap:1.25rem">
+
+      {% if result.get('error') %}
+      <div class="alert-box alert-box--danger">Error: {{ result.error }}</div>
+
+      {% else %}
+      <!-- Main diagnosis card -->
+      <div class="result-panel" style="background:rgba(167,139,250,0.07);border:1px solid rgba(167,139,250,0.3)">
+        <div class="result-badge" style="background:rgba(167,139,250,0.2);color:var(--purple);border:1px solid rgba(167,139,250,0.4)">
+          DIAGNOSIS RESULT
+        </div>
+        <div class="result-title" style="color:var(--purple)">{{ result.disease }}</div>
+
+        <div style="display:flex;gap:1rem;margin-top:.5rem;flex-wrap:wrap">
+          <div class="metric-mini">
+            <span class="metric-mini-label">Confidence</span>
+            <span class="metric-mini-val {% if result.conf_level == 'high' %}text-success{% elif result.conf_level == 'medium' %}text-warning{% else %}text-danger{% endif %}">
+              {{ result.confidence }}%
+            </span>
+          </div>
+          <div class="metric-mini">
+            <span class="metric-mini-label">Symptoms Analyzed</span>
+            <span class="metric-mini-val">{{ result.symptom_count }}</span>
+          </div>
+          <div class="metric-mini">
+            <span class="metric-mini-label">Matched Features</span>
+            <span class="metric-mini-val">{{ result.matched_count }}</span>
+          </div>
+        </div>
+
+        {% if result.conf_level == 'low' %}
+        <div class="alert-box alert-box--danger mt-3" style="font-size:.82rem">
+          Low confidence ({{ result.confidence }}%). Please add more symptoms or consult a doctor directly. Do not rely solely on this prediction.
+        </div>
+        {% elif result.conf_level == 'medium' %}
+        <div class="alert-box alert-box--info mt-3" style="font-size:.82rem">
+          Moderate confidence. Consider the top 5 alternatives below and seek professional medical advice.
+        </div>
+        {% endif %}
+
+        {% if result.matched %}
+        <div style="margin-top:.75rem">
+          <div style="font-size:.78rem;color:var(--text-2);margin-bottom:.4rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Recognised Symptoms</div>
+          <div style="display:flex;flex-wrap:wrap;gap:.35rem">
+            {% for s in result.matched %}
+            <span class="sym-chip sym-chip--on">{{ s }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if result.unrecognised %}
+        <div style="margin-top:.6rem">
+          <div style="font-size:.78rem;color:var(--text-3);margin-bottom:.3rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Not In Model</div>
+          <div style="display:flex;flex-wrap:wrap;gap:.35rem">
+            {% for s in result.unrecognised %}
+            <span class="sym-chip sym-chip--off">{{ s }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <hr class="divider"/>
+
+        <div class="section-title" style="font-size:.85rem">Top 5 Disease Probabilities</div>
+        <div class="prob-list mt-2">
+          {% for item in result.top5 %}
+          <div class="prob-item {% if loop.first %}prob-item--top{% endif %}">
+            <span class="prob-name">{{ item.disease }}</span>
+            <div class="prob-track"><div class="prob-fill" data-width="{{ item.probability }}" style="width:0%"></div></div>
+            <span class="prob-pct">{{ item.probability }}%</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Precautions card -->
+      {% if result.precautions %}
+      <div class="card" style="border-color:rgba(255,183,3,0.3);background:rgba(255,183,3,0.04)">
+        <div class="card-title" style="color:var(--warning);margin-bottom:.75rem">
+          Recommended Precautions
+        </div>
+        <ol style="padding-left:1.25rem;display:flex;flex-direction:column;gap:.5rem">
+          {% for p in result.precautions %}
+          <li style="font-size:.88rem;color:var(--text);line-height:1.5">{{ p|capitalize }}</li>
+          {% endfor %}
+        </ol>
+        <div class="alert-box alert-box--info mt-3" style="font-size:.78rem">
+          These are general precautions. Always consult a qualified healthcare professional for a proper diagnosis and treatment plan.
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Drug recommendations -->
+      {% if result.drug_recs %}
+      <div>
+        <div class="section-title">Possibly Relevant Medications</div>
+        <div style="display:grid;gap:.6rem;margin-top:.6rem">
+          {% for d in result.drug_recs[:3] %}
+          <div class="drug-card">
+            <div class="drug-name">{{ d.medicine_name }}</div>
+            <div class="drug-meta">
+              <div class="drug-meta-row"><span class="drug-meta-key">Avg Rating</span><span class="drug-stars">{{ "%.1f"|format(d.avg_rating) }}/10</span></div>
+              <div class="drug-meta-row"><span class="drug-meta-key">Effectiveness</span><span class="drug-meta-val">{{ d.effectiveness }}</span></div>
+              <div class="drug-meta-row"><span class="drug-meta-key">Side Effects</span><span class="drug-meta-val">{{ d.side_effects }}</span></div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Live search filter
+const searchInput = document.getElementById('symptom-search');
+const grid = document.getElementById('symptom-grid');
+if (searchInput && grid) {
+  searchInput.addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    grid.querySelectorAll('.symptom-item').forEach(item => {
+      item.style.display = item.dataset.label.includes(q) ? '' : 'none';
+    });
+  });
+}
+// Clear all button
+const clearBtn = document.getElementById('clear-all');
+if (clearBtn) {
+  clearBtn.addEventListener('click', () => {
+    document.querySelectorAll('.symptom-item input[type=checkbox]').forEach(cb => {
+      cb.checked = false;
+      cb.closest('.symptom-item').classList.remove('active');
+    });
+    const counter = document.getElementById('symptom-count');
+    if (counter) counter.textContent = '0 selected';
+  });
+}
+</script>
+{% endblock %}

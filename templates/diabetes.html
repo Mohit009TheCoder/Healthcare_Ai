@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Diabetes Prediction{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="badge badge-cyan">Diabetes</div>
+  <h1 class="page-title mt-1">Diabetes Risk Prediction</h1>
+  <p class="page-subtitle">Random Forest classifier (200 estimators) trained on clinical data — glucose, BMI, insulin, blood pressure and lifestyle indicators.</p>
+</div>
+
+<div class="section-gap" style="padding-top:0">
+  <div style="display:grid;grid-template-columns:{% if result %}1fr 1fr{% else %}1fr{% endif %};gap:2rem;align-items:start">
+
+    <div class="card">
+      <form method="POST" action="{{ url_for('predict_diabetes') }}">
+        <div class="card-title">Clinical Parameters</div>
+        <div class="form-grid mt-3">
+          <div class="field">
+            <label class="label">Age</label>
+            <input type="number" name="age" class="input" placeholder="e.g. 45" min="1" max="120" required/>
+          </div>
+          <div class="field">
+            <label class="label">Glucose Level (mg/dL)</label>
+            <input type="number" name="glucose_level" class="input" placeholder="e.g. 120" step="0.1" required/>
+          </div>
+          <div class="field">
+            <label class="label">BMI</label>
+            <input type="number" name="bmi" class="input" placeholder="e.g. 27.5" step="0.1" required/>
+          </div>
+          <div class="field">
+            <label class="label">Insulin Level (µU/mL)</label>
+            <input type="number" name="insulin_level" class="input" placeholder="e.g. 80" step="0.1" required/>
+          </div>
+          <div class="field">
+            <label class="label">Blood Pressure (mmHg)</label>
+            <input type="number" name="blood_pressure" class="input" placeholder="e.g. 80" step="0.1" required/>
+          </div>
+          <div class="field">
+            <label class="label">Pregnancies</label>
+            <input type="number" name="pregnancies" class="input" placeholder="e.g. 0" min="0" max="20" required/>
+          </div>
+          <div class="field">
+            <label class="label">Diabetes Pedigree Function</label>
+            <input type="number" name="diabetes_pedigree_function" class="input" placeholder="e.g. 0.627" step="0.001" required/>
+          </div>
+        </div>
+
+        <div class="section-title mt-3" style="font-size:.85rem">Symptom Indicators</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.6rem">
+          {% for sym in ['frequent_urination', 'excessive_thirst', 'fatigue', 'blurred_vision'] %}
+          <div class="field">
+            <label class="label">{{ sym.replace('_', ' ').title() }}</label>
+            <select name="{{ sym }}" class="input">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+          {% endfor %}
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-4" style="width:100%;justify-content:center">
+          Predict Diabetes Risk
+        </button>
+      </form>
+    </div>
+
+    {% if result %}
+    <div style="display:flex;flex-direction:column;gap:1.25rem">
+      {% if result.get('error') %}
+      <div class="alert-box alert-box--danger">Error: {{ result.error }}</div>
+      {% else %}
+
+      <div class="result-panel" style="background:{% if result.label == 'POSITIVE' %}rgba(255,77,109,0.08){% else %}rgba(0,255,157,0.06){% endif %};border:1px solid {% if result.label == 'POSITIVE' %}rgba(255,77,109,0.35){% else %}rgba(0,255,157,0.3){% endif %}">
+        <div class="result-badge" style="background:{% if result.label == 'POSITIVE' %}rgba(255,77,109,0.18){% else %}rgba(0,255,157,0.15){% endif %};color:{% if result.label == 'POSITIVE' %}var(--danger){% else %}var(--success){% endif %};border:1px solid {% if result.label == 'POSITIVE' %}rgba(255,77,109,0.4){% else %}rgba(0,255,157,0.35){% endif %}">
+          {{ result.label }}
+        </div>
+        <div class="result-title" style="color:{% if result.label == 'POSITIVE' %}var(--danger){% else %}var(--success){% endif %}">
+          {{ result.prediction }}
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:.5rem;flex-wrap:wrap">
+          <div class="metric-mini">
+            <span class="metric-mini-label">Confidence</span>
+            <span class="metric-mini-val">{{ result.confidence }}%</span>
+          </div>
+          <div class="metric-mini">
+            <span class="metric-mini-label">Diabetes Risk Score</span>
+            <span class="metric-mini-val {% if result.risk_score > 60 %}text-danger{% elif result.risk_score > 40 %}text-warning{% else %}text-success{% endif %}">{{ result.risk_score }}%</span>
+          </div>
+        </div>
+
+        <hr class="divider"/>
+        <div class="section-title" style="font-size:.85rem">Top Contributing Factors</div>
+        <div class="prob-list mt-2">
+          {% for f in result.top_factors %}
+          <div class="prob-item">
+            <span class="prob-name">{{ f.name }}</span>
+            <div class="prob-track"><div class="prob-fill" data-width="{{ f.importance }}" style="width:0%"></div></div>
+            <span class="prob-pct">{{ f.importance }}%</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      {% if result.precautions %}
+      <div class="card" style="border-color:rgba(255,183,3,0.3);background:rgba(255,183,3,0.04)">
+        <div class="card-title" style="color:var(--warning);margin-bottom:.75rem">Recommended Precautions</div>
+        <ol style="padding-left:1.25rem;display:flex;flex-direction:column;gap:.5rem">
+          {% for p in result.precautions %}
+          <li style="font-size:.88rem;color:var(--text);line-height:1.5">{{ p|capitalize }}</li>
+          {% endfor %}
+        </ol>
+        <div class="alert-box alert-box--info mt-3" style="font-size:.78rem">
+          Always consult a qualified healthcare professional for proper diagnosis and treatment.
+        </div>
+      </div>
+      {% endif %}
+
+      {% if result.drug_recs %}
+      <div>
+        <div class="section-title">Relevant Medications</div>
+        <div style="display:grid;gap:.6rem;margin-top:.6rem">
+          {% for d in result.drug_recs[:3] %}
+          <div class="drug-card">
+            <div class="drug-name">{{ d.medicine_name }}</div>
+            <div class="drug-meta">
+              <div class="drug-meta-row"><span class="drug-meta-key">Avg Rating</span><span class="drug-stars">{{ "%.1f"|format(d.avg_rating) }}/10</span></div>
+              <div class="drug-meta-row"><span class="drug-meta-key">Effectiveness</span><span class="drug-meta-val">{{ d.effectiveness }}</span></div>
+              <div class="drug-meta-row"><span class="drug-meta-key">Side Effects</span><span class="drug-meta-val">{{ d.side_effects }}</span></div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
