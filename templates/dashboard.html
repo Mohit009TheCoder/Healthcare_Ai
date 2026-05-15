@@ -14,11 +14,11 @@
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
     <div class="card">
       <div class="card-title">Disease Sample Distribution</div>
-      <div data-chart='{{ charts.disease_dist | tojson }}' style="height:400px"></div>
+      <div data-chart='{{ charts.disease_dist | tojson | safe }}' style="height:400px"></div>
     </div>
     <div class="card">
       <div class="card-title">Top 15 Most Common Symptoms</div>
-      <div data-chart='{{ charts.sym_heatmap | tojson }}' style="height:400px"></div>
+      <div data-chart='{{ charts.sym_heatmap | tojson | safe }}' style="height:400px"></div>
     </div>
   </div>
 
@@ -26,11 +26,11 @@
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
     <div class="card">
       <div class="card-title">Glucose Level by Diabetes Diagnosis</div>
-      <div data-chart='{{ charts.glucose_dist | tojson }}' style="height:400px"></div>
+      <div data-chart='{{ charts.glucose_dist | tojson | safe }}' style="height:400px"></div>
     </div>
     <div class="card">
       <div class="card-title">Age Distribution by Diabetes</div>
-      <div data-chart='{{ charts.age_violin | tojson }}' style="height:400px"></div>
+      <div data-chart='{{ charts.age_violin | tojson | safe }}' style="height:400px"></div>
     </div>
   </div>
 
@@ -38,11 +38,11 @@
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
     <div class="card">
       <div class="card-title">Heart Disease Risk Factors</div>
-      <div data-chart='{{ charts.heart_risk | tojson }}' style="height:400px"></div>
+      <div data-chart='{{ charts.heart_risk | tojson | safe }}' style="height:400px"></div>
     </div>
     <div class="card">
       <div class="card-title">BMI vs Glucose Level</div>
-      <div data-chart='{{ charts.bmi_glucose | tojson }}' style="height:400px"></div>
+      <div data-chart='{{ charts.bmi_glucose | tojson | safe }}' style="height:400px"></div>
     </div>
   </div>
 
@@ -50,11 +50,11 @@
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
     <div class="card">
       <div class="card-title">Drug Rating Distribution (Top 10)</div>
-      <div data-chart='{{ charts.drug_rating | tojson }}' style="height:400px"></div>
+      <div data-chart='{{ charts.drug_rating | tojson | safe }}' style="height:400px"></div>
     </div>
     <div class="card">
       <div class="card-title">Model Accuracy — Ensemble vs Single</div>
-      <div data-chart='{{ charts.model_acc | tojson }}' style="height:400px"></div>
+      <div data-chart='{{ charts.model_acc | tojson | safe }}' style="height:400px"></div>
     </div>
   </div>
 
@@ -66,22 +66,22 @@
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
     <div class="card">
       <div class="card-title">Model Performance Metrics Comparison</div>
-      <div data-chart='{{ charts.model_comparison | tojson }}' style="height:450px"></div>
+      <div data-chart='{{ charts.model_comparison | tojson | safe }}' style="height:450px"></div>
     </div>
     <div class="card">
       <div class="card-title">Prediction Confidence Distribution</div>
-      <div data-chart='{{ charts.confidence_dist | tojson }}' style="height:450px"></div>
+      <div data-chart='{{ charts.confidence_dist | tojson | safe }}' style="height:450px"></div>
     </div>
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
     <div class="card">
       <div class="card-title">Top 5 Feature Importance by Model</div>
-      <div data-chart='{{ charts.feature_importance | tojson }}' style="height:450px"></div>
+      <div data-chart='{{ charts.feature_importance | tojson | safe }}' style="height:450px"></div>
     </div>
     <div class="card">
       <div class="card-title">Dataset Sizes</div>
-      <div data-chart='{{ charts.dataset_sizes | tojson }}' style="height:450px"></div>
+      <div data-chart='{{ charts.dataset_sizes | tojson | safe }}' style="height:450px"></div>
     </div>
   </div>
 

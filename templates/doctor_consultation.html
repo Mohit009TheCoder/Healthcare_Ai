@@ -1,0 +1,620 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Consultation - Healthcare System{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary: #00d4ff;
+        --success: #00ff9d;
+        --danger: #ff4d6d;
+        --warning: #ffb703;
+        --purple: #a78bfa;
+        --bg: #060a14;
+        --card: #0d1424;
+        --text: #e2e8f0;
+    }
+
+    body {
+        background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+        color: var(--text);
+    }
+
+    .consultation-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+
+    .consultation-header {
+        margin-bottom: 2rem;
+        border-bottom: 2px solid var(--primary);
+        padding-bottom: 1rem;
+    }
+
+    .consultation-header h1 {
+        font-size: 2rem;
+        background: linear-gradient(135deg, var(--primary), var(--purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+
+    .consultation-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .consultation-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .card {
+        background: rgba(13, 20, 36, 0.8);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(167, 139, 250, 0.15));
+        border-bottom: 2px solid var(--primary);
+        padding: 1rem;
+        margin: -1.5rem -1.5rem 1rem -1.5rem;
+        border-radius: 12px 12px 0 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    .complaint-list {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .complaint-item {
+        background: rgba(0, 212, 255, 0.05);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .complaint-item:hover {
+        border-color: var(--primary);
+        background: rgba(0, 212, 255, 0.1);
+        transform: translateX(5px);
+    }
+
+    .complaint-item.active {
+        border-color: var(--success);
+        background: rgba(0, 255, 157, 0.1);
+    }
+
+    .complaint-title {
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .complaint-patient {
+        font-size: 0.9rem;
+        color: rgba(226, 232, 240, 0.7);
+        margin-bottom: 0.5rem;
+    }
+
+    .complaint-severity {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .severity-mild {
+        background: rgba(0, 255, 157, 0.2);
+        color: var(--success);
+    }
+
+    .severity-moderate {
+        background: rgba(255, 183, 3, 0.2);
+        color: var(--warning);
+    }
+
+    .severity-severe {
+        background: rgba(255, 77, 109, 0.2);
+        color: var(--danger);
+    }
+
+    .detail-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .detail-value {
+        background: rgba(0, 212, 255, 0.05);
+        padding: 0.75rem;
+        border-radius: 6px;
+        border-left: 3px solid var(--primary);
+    }
+
+    .symptoms-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .symptom-badge {
+        background: var(--primary);
+        color: var(--bg);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        background: rgba(0, 212, 255, 0.05);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 8px;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 1rem;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: rgba(0, 212, 255, 0.1);
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .drug-search {
+        position: relative;
+    }
+
+    .drug-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(13, 20, 36, 0.95);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 10;
+        display: none;
+    }
+
+    .drug-suggestions.show {
+        display: block;
+    }
+
+    .drug-suggestion-item {
+        padding: 0.75rem;
+        border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .drug-suggestion-item:hover {
+        background: rgba(0, 212, 255, 0.1);
+    }
+
+    .selected-drugs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .drug-tag {
+        background: var(--success);
+        color: var(--bg);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .drug-tag button {
+        background: none;
+        border: none;
+        color: var(--bg);
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, var(--primary), var(--purple));
+        border: none;
+        color: var(--bg);
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: rgba(226, 232, 240, 0.5);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .success-message {
+        background: rgba(0, 255, 157, 0.1);
+        border: 1px solid var(--success);
+        color: var(--success);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: none;
+    }
+
+    .success-message.show {
+        display: block;
+    }
+
+    .error-message {
+        background: rgba(255, 77, 109, 0.1);
+        border: 1px solid var(--danger);
+        color: var(--danger);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: none;
+    }
+
+    .error-message.show {
+        display: block;
+    }
+</style>
+
+<div class="consultation-container">
+    <!-- Header -->
+    <div class="consultation-header">
+        <h1>👨‍⚕️ Doctor Consultation</h1>
+        <p style="color: rgba(226, 232, 240, 0.7); margin-top: 0.5rem;">Review patient complaints and provide recommendations</p>
+    </div>
+
+    <!-- Messages -->
+    <div id="successMessage" class="success-message"></div>
+    <div id="errorMessage" class="error-message"></div>
+
+    <div class="consultation-grid">
+        <!-- Left: Complaints List -->
+        <div class="card">
+            <div class="card-header">📋 Patient Complaints</div>
+            <div class="complaint-list" id="complaintsList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">⏳</div>
+                    <p>Loading complaints...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Complaint Details & Recommendation -->
+        <div class="card">
+            <div class="card-header">📝 Provide Recommendation</div>
+            <div id="detailsSection" class="empty-state">
+                <div class="empty-state-icon">👈</div>
+                <p>Select a complaint to view details and provide recommendation</p>
+            </div>
+
+            <div id="recommendationForm" style="display: none;">
+                <!-- Complaint Details -->
+                <div class="detail-section">
+                    <div class="detail-label">Patient Information</div>
+                    <div class="detail-value">
+                        <div id="patientInfo"></div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-label">Symptoms</div>
+                    <div class="symptoms-list" id="symptomsList"></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-label">Description</div>
+                    <div class="detail-value" id="descriptionValue"></div>
+                </div>
+
+                <!-- Diagnosis -->
+                <div class="form-group">
+                    <label class="form-label">🔍 Diagnosis</label>
+                    <textarea class="form-control" id="diagnosis" placeholder="Enter your diagnosis based on symptoms and description"></textarea>
+                </div>
+
+                <!-- Drug Recommendation -->
+                <div class="form-group">
+                    <label class="form-label">💊 Recommended Drugs</label>
+                    <div class="drug-search">
+                        <input type="text" class="form-control" id="drugSearch" placeholder="Search and add drugs...">
+                        <div class="drug-suggestions" id="drugSuggestions"></div>
+                    </div>
+                    <div class="selected-drugs" id="selectedDrugs"></div>
+                </div>
+
+                <!-- Treatment Plan -->
+                <div class="form-group">
+                    <label class="form-label">📋 Treatment Plan</label>
+                    <textarea class="form-control" id="treatmentPlan" placeholder="Describe the treatment plan, lifestyle changes, and follow-up instructions"></textarea>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-group">
+                    <label class="form-label">📌 Additional Notes</label>
+                    <textarea class="form-control" id="notes" placeholder="Any additional notes or warnings for the patient"></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <button class="btn-submit" onclick="submitRecommendation()">✅ Submit Recommendation</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentComplaintId = null;
+    let selectedDrugs = [];
+
+    // Load complaints
+    async function loadComplaints() {
+        try {
+            const response = await fetch('/api/doctor/complaints');
+            const data = await response.json();
+
+            const container = document.getElementById('complaintsList');
+
+            if (data.complaints && data.complaints.length > 0) {
+                let html = '';
+                data.complaints.forEach(complaint => {
+                    const severityClass = `severity-${complaint.severity}`;
+                    html += `
+                        <div class="complaint-item" onclick="selectComplaint(${complaint.id})">
+                            <div class="complaint-title">${complaint.title}</div>
+                            <div class="complaint-patient">👤 ${complaint.patient_name}</div>
+                            <span class="complaint-severity ${severityClass}">${complaint.severity.toUpperCase()}</span>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <p>No pending complaints</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error loading complaints:', error);
+        }
+    }
+
+    // Select complaint
+    async function selectComplaint(complaintId) {
+        currentComplaintId = complaintId;
+
+        // Update UI
+        document.querySelectorAll('.complaint-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        event.target.closest('.complaint-item').classList.add('active');
+
+        // Load complaint details
+        try {
+            const response = await fetch(`/api/doctor/complaint/${complaintId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                displayComplaintDetails(data.complaint);
+                document.getElementById('detailsSection').style.display = 'none';
+                document.getElementById('recommendationForm').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading complaint details:', error);
+        }
+    }
+
+    // Display complaint details
+    function displayComplaintDetails(complaint) {
+        // Patient info
+        document.getElementById('patientInfo').innerHTML = `
+            <strong>${complaint.patient_name}</strong><br>
+            📧 ${complaint.patient_email}
+        `;
+
+        // Symptoms
+        const symptomsList = document.getElementById('symptomsList');
+        symptomsList.innerHTML = complaint.symptoms
+            .map(s => `<span class="symptom-badge">${s}</span>`)
+            .join('');
+
+        // Description
+        document.getElementById('descriptionValue').textContent = complaint.description;
+
+        // Reset form
+        document.getElementById('diagnosis').value = '';
+        document.getElementById('treatmentPlan').value = '';
+        document.getElementById('notes').value = '';
+        selectedDrugs = [];
+        document.getElementById('selectedDrugs').innerHTML = '';
+    }
+
+    // Drug search
+    document.getElementById('drugSearch').addEventListener('input', async (e) => {
+        const query = e.target.value;
+
+        if (query.length < 2) {
+            document.getElementById('drugSuggestions').classList.remove('show');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/drugs/search?q=${query}`);
+            const data = await response.json();
+
+            const suggestions = document.getElementById('drugSuggestions');
+
+            if (data.drugs && data.drugs.length > 0) {
+                suggestions.innerHTML = data.drugs
+                    .map(drug => `
+                        <div class="drug-suggestion-item" onclick="addDrug('${drug.drug_name}', '${drug.dosage}')">
+                            <strong>${drug.drug_name}</strong><br>
+                            <small>${drug.dosage} - ${drug.uses}</small>
+                        </div>
+                    `)
+                    .join('');
+                suggestions.classList.add('show');
+            } else {
+                suggestions.innerHTML = '<div class="drug-suggestion-item">No drugs found</div>';
+                suggestions.classList.add('show');
+            }
+        } catch (error) {
+            console.error('Error searching drugs:', error);
+        }
+    });
+
+    // Add drug
+    function addDrug(drugName, dosage) {
+        if (!selectedDrugs.find(d => d.name === drugName)) {
+            selectedDrugs.push({ name: drugName, dosage });
+            updateSelectedDrugs();
+        }
+        document.getElementById('drugSearch').value = '';
+        document.getElementById('drugSuggestions').classList.remove('show');
+    }
+
+    // Remove drug
+    function removeDrug(drugName) {
+        selectedDrugs = selectedDrugs.filter(d => d.name !== drugName);
+        updateSelectedDrugs();
+    }
+
+    // Update selected drugs display
+    function updateSelectedDrugs() {
+        const container = document.getElementById('selectedDrugs');
+        container.innerHTML = selectedDrugs
+            .map(drug => `
+                <div class="drug-tag">
+                    <span>${drug.name} (${drug.dosage})</span>
+                    <button type="button" onclick="removeDrug('${drug.name}')">×</button>
+                </div>
+            `)
+            .join('');
+    }
+
+    // Submit recommendation
+    async function submitRecommendation() {
+        if (!currentComplaintId) {
+            showError('Please select a complaint');
+            return;
+        }
+
+        const diagnosis = document.getElementById('diagnosis').value;
+        const treatmentPlan = document.getElementById('treatmentPlan').value;
+        const notes = document.getElementById('notes').value;
+
+        if (!diagnosis || !treatmentPlan || selectedDrugs.length === 0) {
+            showError('Please fill in all required fields and select at least one drug');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/doctor/recommendation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    complaint_id: currentComplaintId,
+                    diagnosis,
+                    recommended_drugs: selectedDrugs.map(d => d.name),
+                    treatment_plan: treatmentPlan,
+                    notes
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showSuccess('Recommendation submitted successfully!');
+                loadComplaints();
+                currentComplaintId = null;
+                document.getElementById('recommendationForm').style.display = 'none';
+                document.getElementById('detailsSection').style.display = 'block';
+            } else {
+                showError(data.error || 'Failed to submit recommendation');
+            }
+        } catch (error) {
+            showError('Error submitting recommendation: ' + error.message);
+        }
+    }
+
+    function showSuccess(message) {
+        const msg = document.getElementById('successMessage');
+        msg.textContent = message;
+        msg.classList.add('show');
+        setTimeout(() => msg.classList.remove('show'), 5000);
+    }
+
+    function showError(message) {
+        const msg = document.getElementById('errorMessage');
+        msg.textContent = message;
+        msg.classList.add('show');
+        setTimeout(() => msg.classList.remove('show'), 5000);
+    }
+
+    // Load complaints on page load
+    loadComplaints();
+</script>
+
+{% endblock %}

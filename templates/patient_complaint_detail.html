@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Complaint Details - Healthcare System{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary: #00d4ff;
+        --success: #00ff9d;
+        --danger: #ff4d6d;
+        --warning: #ffb703;
+        --purple: #a78bfa;
+        --bg: #060a14;
+        --card: #0d1424;
+        --text: #e2e8f0;
+    }
+
+    body {
+        background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+        color: var(--text);
+    }
+
+    .detail-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+
+    .detail-header {
+        margin-bottom: 2rem;
+        border-bottom: 2px solid var(--primary);
+        padding-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .detail-header h1 {
+        font-size: 2rem;
+        background: linear-gradient(135deg, var(--primary), var(--purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1.5rem;
+        border-radius: 20px;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+    }
+
+    .status-pending { background: rgba(255, 183, 3, 0.2); color: var(--warning); border: 1px solid var(--warning); }
+    .status-assigned { background: rgba(0, 212, 255, 0.2); color: var(--primary); border: 1px solid var(--primary); }
+    .status-resolved { background: rgba(0, 255, 157, 0.2); color: var(--success); border: 1px solid var(--success); }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+        background: rgba(13, 20, 36, 0.8);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+        margin-bottom: 2rem;
+    }
+
+    .card-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        padding-bottom: 0.75rem;
+    }
+
+    .info-row {
+        margin-bottom: 1rem;
+    }
+
+    .info-label {
+        font-size: 0.85rem;
+        color: rgba(226, 232, 240, 0.6);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.25rem;
+    }
+
+    .info-value {
+        font-size: 1.05rem;
+    }
+
+    .symptoms-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .symptom-tag {
+        background: rgba(0, 212, 255, 0.1);
+        color: var(--primary);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+
+    .prescription-card {
+        background: linear-gradient(135deg, rgba(0, 255, 157, 0.05), rgba(0, 212, 255, 0.05));
+        border: 1px solid var(--success);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .prescription-card::before {
+        content: '℞';
+        position: absolute;
+        top: -20px;
+        right: -10px;
+        font-size: 8rem;
+        opacity: 0.05;
+        color: var(--success);
+        pointer-events: none;
+    }
+
+    .drug-item {
+        background: rgba(0, 255, 157, 0.1);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--success);
+    }
+
+    .drug-name {
+        font-weight: 700;
+        color: var(--success);
+        font-size: 1.1rem;
+    }
+
+    .btn-back {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: rgba(226, 232, 240, 0.1);
+        color: var(--text);
+        text-decoration: none;
+        border-radius: 8px;
+        margin-top: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-back:hover {
+        background: rgba(226, 232, 240, 0.2);
+    }
+</style>
+
+<div class="detail-container">
+    <!-- Header -->
+    <div class="detail-header">
+        <div>
+            <h1>📜 Complaint Details</h1>
+            <p style="color: rgba(226, 232, 240, 0.7); margin-top: 0.5rem;">Submitted on {{ complaint.created_at }}</p>
+        </div>
+        <div class="status-badge status-{{ complaint.status }}">
+            {{ complaint.status }}
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Left Column: Complaint & Recommendation -->
+        <div class="main-content">
+            <!-- Complaint Info -->
+            <div class="card">
+                <div class="card-title">📝 {{ complaint.title }}</div>
+                
+                <div class="info-row">
+                    <div class="info-label">Description</div>
+                    <div class="info-value">{{ complaint.description }}</div>
+                </div>
+
+                <div class="info-row">
+                    <div class="info-label">Symptoms</div>
+                    <div class="symptoms-list">
+                        {% for symptom in complaint.symptoms %}
+                        <span class="symptom-tag">{{ symptom }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Doctor's Recommendation (if resolved) -->
+            {% if recommendations %}
+                {% for rec in recommendations %}
+                <div class="card prescription-card">
+                    <div class="card-title">💊 Doctor's Prescription & Recommendation</div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Diagnosis</div>
+                        <div class="info-value" style="font-weight: 600; color: var(--success);">{{ rec.diagnosis }}</div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-label">Recommended Medications</div>
+                        <div style="margin-top: 0.5rem;">
+                            {% for drug in rec.recommended_drugs %}
+                            <div class="drug-item">
+                                <div class="drug-name">{{ drug }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-label">Treatment Plan</div>
+                        <div class="info-value">{{ rec.treatment_plan }}</div>
+                    </div>
+
+                    {% if rec.notes %}
+                    <div class="info-row">
+                        <div class="info-label">Additional Notes</div>
+                        <div class="info-value" style="font-style: italic; color: rgba(226, 232, 240, 0.8);">{{ rec.notes }}</div>
+                    </div>
+                    {% endif %}
+
+                    <div class="info-row" style="margin-top: 2rem; border-top: 1px solid rgba(0, 255, 157, 0.2); padding-top: 1rem;">
+                        <div class="info-label">Doctor</div>
+                        <div class="info-value">Dr. {{ rec.doctor_name }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="card">
+                    <div class="card-title">⏳ Waiting for Review</div>
+                    <p style="color: rgba(226, 232, 240, 0.6);">Your complaint is currently being reviewed by Dr. {{ complaint.doctor_name }}. You will see the prescription here once they provide a recommendation.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column: Meta Info -->
+        <div class="side-content">
+            <div class="card">
+                <div class="card-title">ℹ️ Meta Information</div>
+                
+                <div class="info-row">
+                    <div class="info-label">Complaint ID</div>
+                    <div class="info-value">#{{ complaint.id }}</div>
+                </div>
+
+                <div class="info-row">
+                    <div class="info-label">Severity</div>
+                    <div class="info-value">
+                        <span style="color: {% if complaint.severity == 'severe' %}var(--danger){% elif complaint.severity == 'moderate' %}var(--warning){% else %}var(--success){% endif %}; font-weight: 700; text-transform: uppercase;">
+                            {{ complaint.severity }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="info-row">
+                    <div class="info-label">Assigned Doctor</div>
+                    <div class="info-value">Dr. {{ complaint.doctor_name }}</div>
+                </div>
+
+                <a href="{{ url_for('patient_complaint') }}" class="btn-back">← Back to Complaints</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

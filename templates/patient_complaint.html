@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Health Complaint - Healthcare System{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary: #00d4ff;
+        --success: #00ff9d;
+        --danger: #ff4d6d;
+        --warning: #ffb703;
+        --purple: #a78bfa;
+        --bg: #060a14;
+        --card: #0d1424;
+        --text: #e2e8f0;
+    }
+
+    body {
+        background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+        color: var(--text);
+    }
+
+    .complaint-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+
+    .complaint-header {
+        margin-bottom: 2rem;
+        border-bottom: 2px solid var(--primary);
+        padding-bottom: 1rem;
+    }
+
+    .complaint-header h1 {
+        font-size: 2rem;
+        background: linear-gradient(135deg, var(--primary), var(--purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+
+    .form-card {
+        background: rgba(13, 20, 36, 0.8);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 12px;
+        padding: 2rem;
+        backdrop-filter: blur(10px);
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--primary);
+        font-size: 0.95rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        background: rgba(0, 212, 255, 0.05);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 8px;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: rgba(0, 212, 255, 0.1);
+        box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    .severity-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .severity-option {
+        position: relative;
+    }
+
+    .severity-option input[type="radio"] {
+        display: none;
+    }
+
+    .severity-label {
+        display: block;
+        padding: 1rem;
+        border: 2px solid rgba(0, 212, 255, 0.3);
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .severity-option input[type="radio"]:checked + .severity-label {
+        border-color: var(--primary);
+        background: rgba(0, 212, 255, 0.2);
+        box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+    }
+
+    .severity-label:hover {
+        border-color: var(--primary);
+        background: rgba(0, 212, 255, 0.1);
+    }
+
+    .symptoms-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .symptom-checkbox {
+        position: relative;
+    }
+
+    .symptom-checkbox input[type="checkbox"] {
+        display: none;
+    }
+
+    .symptom-label {
+        display: block;
+        padding: 0.75rem;
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(0, 212, 255, 0.05);
+        text-align: center;
+    }
+
+    .symptom-checkbox input[type="checkbox"]:checked + .symptom-label {
+        border-color: var(--success);
+        background: rgba(0, 255, 157, 0.2);
+        color: var(--success);
+    }
+
+    .symptom-label:hover {
+        border-color: var(--primary);
+        background: rgba(0, 212, 255, 0.1);
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, var(--primary), var(--purple));
+        border: none;
+        color: var(--bg);
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+    }
+
+    .btn-submit:active {
+        transform: translateY(0);
+    }
+
+    .selected-symptoms {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: rgba(0, 255, 157, 0.1);
+        border: 1px solid rgba(0, 255, 157, 0.3);
+        border-radius: 8px;
+        display: none;
+    }
+
+    .selected-symptoms.show {
+        display: block;
+    }
+
+    .symptom-tag {
+        display: inline-block;
+        background: var(--success);
+        color: var(--bg);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .info-box {
+        background: rgba(0, 212, 255, 0.1);
+        border-left: 4px solid var(--primary);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-box p {
+        margin: 0;
+        color: rgba(226, 232, 240, 0.8);
+    }
+
+    .success-message {
+        background: rgba(0, 255, 157, 0.1);
+        border: 1px solid var(--success);
+        color: var(--success);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: none;
+    }
+
+    .success-message.show {
+        display: block;
+    }
+
+    .error-message {
+        background: rgba(255, 77, 109, 0.1);
+        border: 1px solid var(--danger);
+        color: var(--danger);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: none;
+    }
+
+    .error-message.show {
+        display: block;
+    }
+</style>
+
+<div class="complaint-container">
+    <!-- Header -->
+    <div class="complaint-header">
+        <h1>🏥 Submit Health Complaint</h1>
+        <p style="color: rgba(226, 232, 240, 0.7); margin-top: 0.5rem;">Describe your symptoms and health concerns</p>
+    </div>
+
+    <!-- Info Box -->
+    <div class="info-box">
+        <p>📋 Please provide detailed information about your health issue. A doctor will review your complaint and provide recommendations.</p>
+    </div>
+
+    <!-- Messages -->
+    <div id="successMessage" class="success-message"></div>
+    <div id="errorMessage" class="error-message"></div>
+
+    <!-- Complaint Form -->
+    <form id="complaintForm" class="form-card">
+        <!-- Doctor Selection -->
+        <div class="form-group">
+            <label class="form-label">👨‍⚕️ Select Doctor</label>
+            <select class="form-control" id="doctor_id" name="doctor_id" required>
+                <option value="" disabled selected>Select a doctor for consultation</option>
+                {% for doctor in doctors %}
+                <option value="{{ doctor.id }}">Dr. {{ doctor.full_name }} - {{ doctor.specialization or 'General Practitioner' }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Title -->
+        <div class="form-group">
+            <label class="form-label">📝 Complaint Title</label>
+            <input type="text" class="form-control" id="title" name="title" 
+                   placeholder="e.g., Persistent Headache, Chest Pain, etc." required>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+            <label class="form-label">📄 Detailed Description</label>
+            <textarea class="form-control" id="description" name="description" 
+                      placeholder="Describe your symptoms in detail. When did it start? What makes it better or worse?" required></textarea>
+        </div>
+
+        <!-- Severity -->
+        <div class="form-group">
+            <label class="form-label">⚠️ Severity Level</label>
+            <div class="severity-options">
+                <div class="severity-option">
+                    <input type="radio" id="mild" name="severity" value="mild" required>
+                    <label for="mild" class="severity-label">
+                        <div>😊</div>
+                        <div>Mild</div>
+                    </label>
+                </div>
+                <div class="severity-option">
+                    <input type="radio" id="moderate" name="severity" value="moderate">
+                    <label for="moderate" class="severity-label">
+                        <div>😐</div>
+                        <div>Moderate</div>
+                    </label>
+                </div>
+                <div class="severity-option">
+                    <input type="radio" id="severe" name="severity" value="severe">
+                    <label for="severe" class="severity-label">
+                        <div>😟</div>
+                        <div>Severe</div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Symptoms Selection -->
+        <div class="form-group">
+            <label class="form-label">🔍 Select Symptoms (Choose all that apply)</label>
+            <div class="symptoms-container">
+                {% set symptoms = [
+                    'Fever', 'Cough', 'Sore Throat', 'Headache', 'Body Aches',
+                    'Fatigue', 'Nausea', 'Vomiting', 'Diarrhea', 'Constipation',
+                    'Chest Pain', 'Shortness of Breath', 'Dizziness', 'Anxiety',
+                    'Insomnia', 'Joint Pain', 'Muscle Weakness', 'Blurred Vision',
+                    'Skin Rash', 'Loss of Appetite'
+                ] %}
+                
+                {% for symptom in symptoms %}
+                <div class="symptom-checkbox">
+                    <input type="checkbox" id="symptom_{{ loop.index }}" name="symptoms" value="{{ symptom }}">
+                    <label for="symptom_{{ loop.index }}" class="symptom-label">{{ symptom }}</label>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Selected Symptoms Display -->
+            <div id="selectedSymptoms" class="selected-symptoms">
+                <strong>Selected Symptoms:</strong>
+                <div id="symptomsTags"></div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-submit">📤 Submit Complaint</button>
+    </form>
+
+    <!-- Recent Complaints -->
+    <div class="form-card">
+        <h2 style="color: var(--primary); margin-top: 0;">📋 Your Recent Complaints</h2>
+        <div id="recentComplaints">
+            <p style="color: rgba(226, 232, 240, 0.5);">Loading your complaints...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Update selected symptoms display
+    document.querySelectorAll('input[name="symptoms"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedSymptoms);
+    });
+
+    function updateSelectedSymptoms() {
+        const selected = Array.from(document.querySelectorAll('input[name="symptoms"]:checked'))
+            .map(cb => cb.value);
+        
+        const container = document.getElementById('selectedSymptoms');
+        const tagsDiv = document.getElementById('symptomsTags');
+        
+        if (selected.length > 0) {
+            container.classList.add('show');
+            tagsDiv.innerHTML = selected.map(s => `<span class="symptom-tag">${s}</span>`).join('');
+        } else {
+            container.classList.remove('show');
+        }
+    }
+
+    // Form submission
+    document.getElementById('complaintForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const title = document.getElementById('title').value;
+        const description = document.getElementById('description').value;
+        const severity = document.querySelector('input[name="severity"]:checked').value;
+        const doctor_id = document.getElementById('doctor_id').value;
+        const symptoms = Array.from(document.querySelectorAll('input[name="symptoms"]:checked'))
+            .map(cb => cb.value);
+
+        if (symptoms.length === 0) {
+            showError('Please select at least one symptom');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/patient/complaint', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title,
+                    description,
+                    severity,
+                    doctor_id,
+                    symptoms
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showSuccess('Complaint submitted successfully! A doctor will review it soon.');
+                document.getElementById('complaintForm').reset();
+                updateSelectedSymptoms();
+                loadRecentComplaints();
+            } else {
+                showError(data.error || 'Failed to submit complaint');
+            }
+        } catch (error) {
+            showError('Error submitting complaint: ' + error.message);
+        }
+    });
+
+    function showSuccess(message) {
+        const msg = document.getElementById('successMessage');
+        msg.textContent = message;
+        msg.classList.add('show');
+        setTimeout(() => msg.classList.remove('show'), 5000);
+    }
+
+    function showError(message) {
+        const msg = document.getElementById('errorMessage');
+        msg.textContent = message;
+        msg.classList.add('show');
+        setTimeout(() => msg.classList.remove('show'), 5000);
+    }
+
+    // Load recent complaints
+    async function loadRecentComplaints() {
+        try {
+            const response = await fetch('/api/patient/complaints');
+            const data = await response.json();
+
+            const container = document.getElementById('recentComplaints');
+
+            if (data.complaints && data.complaints.length > 0) {
+                let html = '<table style="width: 100%; border-collapse: collapse;">';
+                html += '<thead><tr style="border-bottom: 2px solid var(--primary);">';
+                html += '<th style="text-align: left; padding: 0.5rem; color: var(--primary);">Title</th>';
+                html += '<th style="text-align: left; padding: 0.5rem; color: var(--primary);">Status</th>';
+                html += '<th style="text-align: left; padding: 0.5rem; color: var(--primary);">Date</th>';
+                html += '</tr></thead><tbody>';
+
+                data.complaints.forEach(complaint => {
+                    const statusColor = complaint.status === 'pending' ? 'var(--warning)' : 
+                                       complaint.status === 'assigned' ? 'var(--primary)' : 'var(--success)';
+                    html += `<tr style="border-bottom: 1px solid rgba(0, 212, 255, 0.1);">`;
+                    html += `<td style="padding: 0.75rem;"><a href="/patient/complaint/${complaint.id}" style="color: var(--primary); text-decoration: none;">${complaint.title}</a></td>`;
+                    html += `<td style="padding: 0.75rem;"><span style="color: ${statusColor}; font-weight: 600;">${complaint.status}</span></td>`;
+                    html += `<td style="padding: 0.75rem; color: rgba(226, 232, 240, 0.7);">${new Date(complaint.created_at).toLocaleDateString()}</td>`;
+                    html += `</tr>`;
+                });
+
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p style="color: rgba(226, 232, 240, 0.5);">No complaints yet. Submit one above!</p>';
+            }
+        } catch (error) {
+            console.error('Error loading complaints:', error);
+        }
+    }
+
+    // Load complaints on page load
+    loadRecentComplaints();
+</script>
+
+{% endblock %}

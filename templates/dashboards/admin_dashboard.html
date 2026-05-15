@@ -1,0 +1,832 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Healthcare System{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary: #00d4ff;
+        --success: #00ff9d;
+        --danger: #ff4d6d;
+        --warning: #ffb703;
+        --purple: #a78bfa;
+        --bg: #060a14;
+        --card: #0d1424;
+        --text: #e2e8f0;
+    }
+
+    body {
+        background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+        color: var(--text);
+    }
+
+    .dashboard-container {
+        padding: 2rem;
+    }
+
+    .dashboard-header {
+        margin-bottom: 3rem;
+        border-bottom: 2px solid var(--primary);
+        padding-bottom: 1.5rem;
+    }
+
+    .dashboard-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary), var(--purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(167, 139, 250, 0.1));
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .stat-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+    }
+
+    .stat-card:hover::before {
+        left: 100%;
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: rgba(226, 232, 240, 0.7);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary), var(--success));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .section-card {
+        background: rgba(13, 20, 36, 0.8);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .section-header {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(167, 139, 250, 0.15));
+        border-bottom: 2px solid var(--primary);
+        padding: 1.5rem;
+        font-size: 1.2rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-body {
+        padding: 1.5rem;
+    }
+
+    .metric-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .metric-item {
+        background: rgba(0, 212, 255, 0.05);
+        border-left: 3px solid var(--primary);
+        padding: 1rem;
+        border-radius: 6px;
+    }
+
+    .metric-label {
+        font-size: 0.85rem;
+        color: rgba(226, 232, 240, 0.6);
+        margin-bottom: 0.5rem;
+    }
+
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .table-custom {
+        color: var(--text);
+    }
+
+    .table-custom thead {
+        background: rgba(0, 212, 255, 0.1);
+        border-bottom: 2px solid var(--primary);
+    }
+
+    .table-custom th {
+        color: var(--primary);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+    }
+
+    .table-custom tbody tr {
+        border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .table-custom tbody tr:hover {
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .badge-custom {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .badge-primary {
+        background: rgba(0, 212, 255, 0.2);
+        color: var(--primary);
+        border: 1px solid var(--primary);
+    }
+
+    .badge-success {
+        background: rgba(0, 255, 157, 0.2);
+        color: var(--success);
+        border: 1px solid var(--success);
+    }
+
+    .badge-danger {
+        background: rgba(255, 77, 109, 0.2);
+        color: var(--danger);
+        border: 1px solid var(--danger);
+    }
+
+    .progress-custom {
+        background: rgba(0, 212, 255, 0.1);
+        border-radius: 10px;
+        height: 8px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    .progress-bar-custom {
+        background: linear-gradient(90deg, var(--primary), var(--purple));
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+
+    .btn-custom {
+        background: linear-gradient(135deg, var(--primary), var(--purple));
+        border: none;
+        color: var(--bg);
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+        color: var(--bg);
+    }
+
+    .btn-custom-outline {
+        background: transparent;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        padding: 0.65rem 1.4rem;
+    }
+
+    .btn-custom-outline:hover {
+        background: rgba(0, 212, 255, 0.1);
+    }
+
+    .role-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-right: 0.5rem;
+    }
+
+    .role-admin {
+        background: rgba(255, 77, 109, 0.2);
+        color: var(--danger);
+        border: 1px solid var(--danger);
+    }
+
+    .role-doctor {
+        background: rgba(0, 212, 255, 0.2);
+        color: var(--primary);
+        border: 1px solid var(--primary);
+    }
+
+    .role-patient {
+        background: rgba(0, 255, 157, 0.2);
+        color: var(--success);
+        border: 1px solid var(--success);
+    }
+
+    .timestamp {
+        text-align: center;
+        color: rgba(226, 232, 240, 0.5);
+        font-size: 0.9rem;
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0, 212, 255, 0.1);
+    }
+
+    .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .stat-card {
+        cursor: pointer;
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px);
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 12px;
+        padding: 2rem;
+        max-width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        width: 100%;
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--primary);
+        padding-bottom: 1rem;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        color: var(--primary);
+        font-size: 1.8rem;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: var(--primary);
+        font-size: 2rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .modal-close:hover {
+        color: var(--danger);
+        transform: rotate(90deg);
+    }
+
+    .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+
+    .records-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .records-table thead {
+        background: rgba(0, 212, 255, 0.1);
+        position: sticky;
+        top: 0;
+    }
+
+    .records-table th {
+        color: var(--primary);
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid var(--primary);
+    }
+
+    .records-table td {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        color: var(--text);
+    }
+
+    .records-table tbody tr:hover {
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: rgba(226, 232, 240, 0.5);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Scrollbar styling */
+    .modal-body::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .modal-body::-webkit-scrollbar-track {
+        background: rgba(0, 212, 255, 0.1);
+        border-radius: 10px;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 10px;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb:hover {
+        background: var(--purple);
+    }
+</style>
+
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <h1>📊 Admin Dashboard</h1>
+        <p style="color: rgba(226, 232, 240, 0.7); margin-top: 0.5rem;">System Overview & Analytics</p>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="grid-4">
+        <div class="stat-card" onclick="openModal('medical-records')">
+            <div class="stat-icon">�</div>
+            <div class="stat-label">Medical Records</div>
+            <div class="stat-value">{{ data.system_health.total_medical_records }}</div>
+        </div>
+        <div class="stat-card" onclick="openModal('prescriptions')">
+            <div class="stat-icon">�</div>
+            <div class="stat-label">Active Prescriptions</div>
+            <div class="stat-value">{{ data.system_health.active_prescriptions }}</div>
+        </div>
+        <div class="stat-card" onclick="openModal('appointments')">
+            <div class="stat-icon">�</div>
+            <div class="stat-label">Scheduled Appointments</div>
+            <div class="stat-value">{{ data.system_health.scheduled_appointments }}</div>
+        </div>
+        <div class="stat-card" onclick="openModal('users')">
+            <div class="stat-icon">�</div>
+            <div class="stat-label">Active Users (24h)</div>
+            <div class="stat-value">{{ data.system_health.active_users_24h }}</div>
+        </div>
+    </div>
+
+    <!-- System Health Section -->
+    <div class="section-card">
+        <div class="section-header">👥 Users by Role</div>
+        <div class="section-body">
+            <div class="metric-row">
+                {% for role, count in data.system_health.users_by_role.items() %}
+                <div class="metric-item">
+                    <div class="metric-label">
+                        {% if role == 'admin' %}
+                            👨‍💼 Administrators
+                        {% elif role == 'doctor' %}
+                            👨‍⚕️ Doctors
+                        {% elif role == 'patient' %}
+                            🧑‍🦱 Patients
+                        {% else %}
+                            {{ role|title }}
+                        {% endif %}
+                    </div>
+                    <div class="metric-value">{{ count }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Section -->
+    <div class="grid-2">
+        <!-- Recommendation Performance -->
+        <div class="section-card">
+            <div class="section-header">📈 Recommendation Performance</div>
+            <div class="section-body">
+                {% if data.recommendation_performance %}
+                    <table class="table-custom" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>CTR</th>
+                                <th>Conversion</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rec_type, metrics in data.recommendation_performance.items() %}
+                            <tr>
+                                <td>{{ rec_type|title }}</td>
+                                <td><span class="badge-custom badge-primary">{{ "%.1f"|format(metrics.get('ctr', 0)) }}%</span></td>
+                                <td><span class="badge-custom badge-success">{{ "%.1f"|format(metrics.get('conversion', 0)) }}%</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p style="color: rgba(226, 232, 240, 0.5);">No recommendation data available</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- User Engagement -->
+        <div class="section-card">
+            <div class="section-header">📊 User Engagement (30 days)</div>
+            <div class="section-body">
+                {% if data.user_engagement %}
+                    <div class="metric-row">
+                        <div class="metric-item">
+                            <div class="metric-label">Total Sessions</div>
+                            <div class="metric-value">{{ data.user_engagement.get('total_sessions', 0) }}</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Active Users</div>
+                            <div class="metric-value">{{ data.user_engagement.get('total_users', 0) }}</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Avg Duration</div>
+                            <div class="metric-value">{{ data.user_engagement.get('avg_session_duration', 0) }}m</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Pages/Session</div>
+                            <div class="metric-value">{{ data.user_engagement.get('avg_pages_per_session', 0) }}</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <p style="color: rgba(226, 232, 240, 0.5);">No engagement data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Trending & Conversion -->
+    <div class="grid-2">
+        <!-- Trending Items -->
+        <div class="section-card">
+            <div class="section-header">🔥 Trending Items</div>
+            <div class="section-body">
+                {% if data.trending_items %}
+                    <table class="table-custom" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in data.trending_items[:8] %}
+                            <tr>
+                                <td>{{ item.get('item_id', 'N/A')|title }}</td>
+                                <td><span class="badge-custom badge-primary">{{ "%.2f"|format(item.get('score', 0)) }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p style="color: rgba(226, 232, 240, 0.5);">No trending data available</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Conversion Funnel -->
+        <div class="section-card">
+            <div class="section-header">🎯 Conversion Funnel</div>
+            <div class="section-body">
+                {% if data.conversion_funnel %}
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Shown</span>
+                            <span style="color: var(--primary); font-weight: 600;">{{ data.conversion_funnel.get('shown', 0) }}</span>
+                        </div>
+                        <div class="progress-custom">
+                            <div class="progress-bar-custom" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Clicked</span>
+                            <span style="color: var(--success); font-weight: 600;">{{ "%.1f"|format(data.conversion_funnel.get('clicked_pct', 0)) }}%</span>
+                        </div>
+                        <div class="progress-custom">
+                            <div class="progress-bar-custom" style="width: {{ data.conversion_funnel.get('clicked_pct', 0) }}%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Converted</span>
+                            <span style="color: var(--warning); font-weight: 600;">{{ "%.1f"|format(data.conversion_funnel.get('converted_pct', 0)) }}%</span>
+                        </div>
+                        <div class="progress-custom">
+                            <div class="progress-bar-custom" style="width: {{ data.conversion_funnel.get('converted_pct', 0) }}%; background: linear-gradient(90deg, var(--warning), var(--danger));"></div>
+                        </div>
+                    </div>
+                {% else %}
+                    <p style="color: rgba(226, 232, 240, 0.5);">No conversion data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section-card">
+        <div class="section-header">⚙️ Quick Actions</div>
+        <div class="section-body">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="{{ url_for('index') }}" class="btn-custom">🏠 Home</a>
+                <a href="{{ url_for('dashboard_home') }}" class="btn-custom">📊 Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="btn-custom btn-custom-outline">🚪 Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timestamp -->
+    <div class="timestamp">
+        Last updated: {{ data.system_health.timestamp }}
+    </div>
+</div>
+
+<!-- Modals -->
+
+<!-- Medical Records Modal -->
+<div id="medical-records-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>📋 Medical Records</h2>
+            <button class="modal-close" onclick="closeModal('medical-records')">&times;</button>
+        </div>
+        <div class="modal-body" id="medical-records-body">
+            <div class="empty-state">
+                <div class="empty-state-icon">⏳</div>
+                <p>Loading records...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Prescriptions Modal -->
+<div id="prescriptions-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>💊 Prescriptions</h2>
+            <button class="modal-close" onclick="closeModal('prescriptions')">&times;</button>
+        </div>
+        <div class="modal-body" id="prescriptions-body">
+            <div class="empty-state">
+                <div class="empty-state-icon">⏳</div>
+                <p>Loading prescriptions...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Appointments Modal -->
+<div id="appointments-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>📅 Appointments</h2>
+            <button class="modal-close" onclick="closeModal('appointments')">&times;</button>
+        </div>
+        <div class="modal-body" id="appointments-body">
+            <div class="empty-state">
+                <div class="empty-state-icon">⏳</div>
+                <p>Loading appointments...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Users Modal -->
+<div id="users-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>👥 Users</h2>
+            <button class="modal-close" onclick="closeModal('users')">&times;</button>
+        </div>
+        <div class="modal-body" id="users-body">
+            <div class="empty-state">
+                <div class="empty-state-icon">⏳</div>
+                <p>Loading users...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openModal(type) {
+        const modal = document.getElementById(type + '-modal');
+        modal.classList.add('show');
+        loadRecords(type);
+    }
+
+    function closeModal(type) {
+        const modal = document.getElementById(type + '-modal');
+        modal.classList.remove('show');
+    }
+
+    function loadRecords(type) {
+        const bodyId = type + '-body';
+        const body = document.getElementById(bodyId);
+
+        // Fetch data from API
+        fetch(`/api/admin/records/${type}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.records && data.records.length > 0) {
+                    renderRecords(type, data.records, body);
+                } else {
+                    body.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <p>No records found</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading records:', error);
+                body.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <p>Error loading records</p>
+                    </div>
+                `;
+            });
+    }
+
+    function renderRecords(type, records, container) {
+        let html = '<table class="records-table"><thead><tr>';
+
+        // Determine columns based on type
+        if (type === 'medical-records') {
+            html += '<th>ID</th><th>Patient</th><th>Doctor</th><th>Type</th><th>Result</th><th>Confidence</th><th>Date</th></tr></thead><tbody>';
+            records.forEach(record => {
+                html += `
+                    <tr>
+                        <td>${record.id}</td>
+                        <td>${record.patient_name || 'N/A'}</td>
+                        <td>${record.doctor_name || 'N/A'}</td>
+                        <td><span class="badge-custom badge-primary">${record.record_type}</span></td>
+                        <td>${record.prediction_result}</td>
+                        <td><span class="badge-custom badge-success">${(record.confidence * 100).toFixed(1)}%</span></td>
+                        <td>${new Date(record.created_at).toLocaleDateString()}</td>
+                    </tr>
+                `;
+            });
+        } else if (type === 'prescriptions') {
+            html += '<th>ID</th><th>Patient</th><th>Doctor</th><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+            records.forEach(record => {
+                const statusColor = record.status === 'active' ? 'badge-success' : record.status === 'completed' ? 'badge-primary' : 'badge-danger';
+                html += `
+                    <tr>
+                        <td>${record.id}</td>
+                        <td>${record.patient_name || 'N/A'}</td>
+                        <td>${record.doctor_name || 'N/A'}</td>
+                        <td>${record.medicine_name}</td>
+                        <td>${record.dosage}</td>
+                        <td>${record.frequency}</td>
+                        <td><span class="badge-custom ${statusColor}">${record.status}</span></td>
+                        <td>${new Date(record.prescribed_at).toLocaleDateString()}</td>
+                    </tr>
+                `;
+            });
+        } else if (type === 'appointments') {
+            html += '<th>ID</th><th>Patient</th><th>Doctor</th><th>Reason</th><th>Date</th><th>Status</th></tr></thead><tbody>';
+            records.forEach(record => {
+                const statusColor = record.status === 'scheduled' ? 'badge-primary' : record.status === 'completed' ? 'badge-success' : 'badge-danger';
+                html += `
+                    <tr>
+                        <td>${record.id}</td>
+                        <td>${record.patient_name || 'N/A'}</td>
+                        <td>${record.doctor_name || 'N/A'}</td>
+                        <td>${record.reason}</td>
+                        <td>${new Date(record.appointment_date).toLocaleDateString()}</td>
+                        <td><span class="badge-custom ${statusColor}">${record.status}</span></td>
+                    </tr>
+                `;
+            });
+        } else if (type === 'users') {
+            html += '<th>ID</th><th>Username</th><th>Full Name</th><th>Email</th><th>Role</th><th>Status</th></tr></thead><tbody>';
+            records.forEach(record => {
+                const roleClass = 'role-' + record.role;
+                html += `
+                    <tr>
+                        <td>${record.id}</td>
+                        <td>${record.username}</td>
+                        <td>${record.full_name}</td>
+                        <td>${record.email}</td>
+                        <td><span class="role-badge ${roleClass}">${record.role}</span></td>
+                        <td><span class="badge-custom ${record.is_active ? 'badge-success' : 'badge-danger'}">${record.is_active ? 'Active' : 'Inactive'}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.classList.remove('show');
+        }
+    }
+</script>
+
+{% endblock %}

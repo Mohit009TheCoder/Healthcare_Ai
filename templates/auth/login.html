@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — Healthcare System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #e2e8f0;
+      overflow-x: hidden;
+    }
+
+    .background-elements {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.3;
+    }
+
+    .glow-orb-1 {
+      width: 400px;
+      height: 400px;
+      background: rgba(0, 212, 255, 0.3);
+      top: -100px;
+      right: -100px;
+      animation: float 20s infinite ease-in-out;
+    }
+
+    .glow-orb-2 {
+      width: 300px;
+      height: 300px;
+      background: rgba(167, 139, 250, 0.2);
+      bottom: -50px;
+      left: -50px;
+      animation: float 25s infinite ease-in-out reverse;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(30px, 30px); }
+    }
+
+    .auth-container {
+      padding: 2rem;
+      width: 100%;
+      max-width: 500px;
+      z-index: 1;
+    }
+
+    .auth-card {
+      background: rgba(13, 20, 36, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      border-radius: 16px;
+      padding: 3rem;
+      box-shadow: 0 20px 60px rgba(0, 212, 255, 0.1);
+      animation: slideUp 0.6s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .auth-logo {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .auth-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #00d4ff, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-subtitle {
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      color: #e2e8f0;
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-input-wrapper {
+      position: relative;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      background: rgba(13, 20, 36, 0.6);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #00d4ff;
+      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+      background: rgba(13, 20, 36, 0.8);
+    }
+
+    .form-input::placeholder {
+      color: #64748b;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+      padding: 0.5rem;
+    }
+
+    .password-toggle:hover {
+      color: #00d4ff;
+    }
+
+    .form-options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+
+    .remember-me input {
+      cursor: pointer;
+      accent-color: #00d4ff;
+    }
+
+    .forgot-password {
+      color: #00d4ff;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .forgot-password:hover {
+      color: #00ffff;
+      text-decoration: underline;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #00d4ff, #0099cc);
+      border: none;
+      border-radius: 8px;
+      color: #060a14;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: #94a3b8;
+      font-size: 0.9rem;
+    }
+
+    .auth-link {
+      color: #00d4ff;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .auth-link:hover {
+      color: #00ffff;
+      text-decoration: underline;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 2rem 0;
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(0, 212, 255, 0.1);
+    }
+
+    .divider span {
+      padding: 0 1rem;
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .alert-success {
+      background: rgba(0, 255, 157, 0.1);
+      border: 1px solid rgba(0, 255, 157, 0.3);
+      color: #00ff9d;
+    }
+
+    .alert-danger {
+      background: rgba(255, 77, 109, 0.1);
+      border: 1px solid rgba(255, 77, 109, 0.3);
+      color: #ff4d6d;
+    }
+
+    .alert-info {
+      background: rgba(0, 212, 255, 0.1);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      color: #00d4ff;
+    }
+
+    .alert-icon {
+      font-size: 1.2rem;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    .security-info {
+      background: rgba(0, 212, 255, 0.05);
+      border-left: 3px solid #00d4ff;
+      padding: 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .security-info-icon {
+      color: #00d4ff;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    @media (max-width: 600px) {
+      .auth-card {
+        padding: 2rem;
+      }
+
+      .auth-title {
+        font-size: 1.5rem;
+      }
+
+      .auth-logo {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="background-elements">
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+  </div>
+
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">🏥</div>
+        <h1 class="auth-title">Healthcare System</h1>
+        <p class="auth-subtitle">Secure Login Portal</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              <div class="alert-icon">
+                {% if category == 'success' %}
+                  <i class="fas fa-check-circle"></i>
+                {% elif category == 'danger' %}
+                  <i class="fas fa-exclamation-circle"></i>
+                {% else %}
+                  <i class="fas fa-info-circle"></i>
+                {% endif %}
+              </div>
+              <div>{{ message }}</div>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('login') }}" id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="username">
+            <i class="fas fa-user"></i> Username
+          </label>
+          <div class="form-input-wrapper">
+            <input 
+              type="text" 
+              id="username" 
+              name="username" 
+              class="form-input" 
+              placeholder="Enter your username"
+              required 
+              autofocus
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">
+            <i class="fas fa-lock"></i> Password
+          </label>
+          <div class="form-input-wrapper">
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              class="form-input" 
+              placeholder="Enter your password"
+              required
+            />
+            <button 
+              type="button" 
+              class="password-toggle" 
+              id="passwordToggle"
+              title="Show/Hide Password"
+            >
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox" name="remember" id="remember"/>
+            <span>Remember me</span>
+          </label>
+          <a href="{{ url_for('forgot_password') }}" class="forgot-password">
+            Forgot Password?
+          </a>
+        </div>
+
+        <button type="submit" class="btn-primary">
+          <i class="fas fa-sign-in-alt"></i> Sign In
+        </button>
+      </form>
+
+      <div class="divider">
+        <span>New to our platform?</span>
+      </div>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="{{ url_for('register') }}" class="auth-link">Create one now</a>
+      </div>
+
+      <div class="security-info">
+        <div class="security-info-icon">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <div>
+          <strong>Security Notice:</strong> This is a secure login portal. Never share your password with anyone. We will never ask for your password via email.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Password visibility toggle
+    const passwordInput = document.getElementById('password');
+    const passwordToggle = document.getElementById('passwordToggle');
+
+    passwordToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      
+      // Update icon
+      if (type === 'password') {
+        this.innerHTML = '<i class="fas fa-eye"></i>';
+        this.title = 'Show Password';
+      } else {
+        this.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        this.title = 'Hide Password';
+      }
+    });
+
+    // Form submission
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        e.preventDefault();
+        alert('Please fill in all fields');
+      }
+    });
+
+    // Remember me functionality
+    const rememberCheckbox = document.getElementById('remember');
+    const usernameInput = document.getElementById('username');
+
+    // Load saved username if exists
+    window.addEventListener('load', function() {
+      const savedUsername = localStorage.getItem('savedUsername');
+      if (savedUsername) {
+        usernameInput.value = savedUsername;
+        rememberCheckbox.checked = true;
+      }
+    });
+
+    // Save username when form is submitted
+    document.getElementById('loginForm').addEventListener('submit', function() {
+      if (rememberCheckbox.checked) {
+        localStorage.setItem('savedUsername', usernameInput.value);
+      } else {
+        localStorage.removeItem('savedUsername');
+      }
+    });
+  </script>
+</body>
+</html>

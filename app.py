@@ -2,6 +2,7 @@ import os
 import json
 import warnings
 import time
+import sqlite3
 from datetime import datetime
 warnings.filterwarnings('ignore')
 
@@ -13,9 +14,10 @@ import os
 config_path = os.path.join(os.path.dirname(__file__), 'config', '.env')
 load_dotenv(config_path)
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
 import numpy as np
 import joblib
@@ -33,6 +35,16 @@ from src.validators import (
 
 # Import logger from src
 from src.logger_config import setup_logger, log_prediction
+
+# Import authentication and recommendation modules
+from src.auth import (
+    authenticate_user, create_user, get_user_by_id, get_user_profile,
+    create_doctor_profile, create_patient_profile, get_all_doctors, get_all_patients,
+    login_required, role_required, init_db
+)
+from src.recommendation_engine import recommendation_engine
+from src.sentiment_analysis import sentiment_analyzer
+from src.analytics import analytics_engine
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
@@ -228,6 +240,11 @@ def chart_json(fig):
 
 def get_dashboard_charts():
     charts = {}
+    
+    # Create a fallback empty chart object
+    def empty_chart():
+        return {"data": [], "layout": {}, "config": {}}
+    
     try:
         # 1. Disease distribution
         try:
@@ -242,6 +259,7 @@ def get_dashboard_charts():
             charts['disease_dist'] = chart_json(fig1)
         except Exception as e:
             logger.error(f"Error generating disease_dist: {e}")
+            charts['disease_dist'] = empty_chart()
 
         # 2. Top symptoms frequency
         try:
@@ -259,6 +277,7 @@ def get_dashboard_charts():
             charts['sym_heatmap'] = chart_json(fig2)
         except Exception as e:
             logger.error(f"Error generating sym_heatmap: {e}")
+            charts['sym_heatmap'] = empty_chart()
 
         # 3. Glucose distribution - FIXED
         try:
@@ -290,6 +309,7 @@ def get_dashboard_charts():
             charts['glucose_dist'] = chart_json(fig3)
         except Exception as e:
             logger.error(f"Error generating glucose_dist: {e}", exc_info=True)
+            charts['glucose_dist'] = empty_chart()
 
         # 4. Age distribution by diabetes (violin plot) - FIXED
         try:
@@ -323,6 +343,7 @@ def get_dashboard_charts():
             charts['age_violin'] = chart_json(fig4)
         except Exception as e:
             logger.error(f"Error generating age_violin: {e}", exc_info=True)
+            charts['age_violin'] = empty_chart()
 
         # 5. Heart risk factors
         try:
@@ -336,6 +357,7 @@ def get_dashboard_charts():
             charts['heart_risk'] = chart_json(fig5)
         except Exception as e:
             logger.error(f"Error generating heart_risk: {e}")
+            charts['heart_risk'] = empty_chart()
 
         # 6. BMI vs Glucose scatter - FIXED
         try:
@@ -366,6 +388,7 @@ def get_dashboard_charts():
             charts['bmi_glucose'] = chart_json(fig6)
         except Exception as e:
             logger.error(f"Error generating bmi_glucose: {e}", exc_info=True)
+            charts['bmi_glucose'] = empty_chart()
 
         # 7. Drug rating distribution (top 10 drugs)
         try:
@@ -378,6 +401,7 @@ def get_dashboard_charts():
             charts['drug_rating'] = chart_json(fig7)
         except Exception as e:
             logger.error(f"Error generating drug_rating: {e}")
+            charts['drug_rating'] = empty_chart()
 
         # 8. Model accuracy
         try:
@@ -392,6 +416,7 @@ def get_dashboard_charts():
             charts['model_acc'] = chart_json(fig8)
         except Exception as e:
             logger.error(f"Error generating model_acc: {e}")
+            charts['model_acc'] = empty_chart()
         
         # 9. NEW: Model Performance Comparison (Precision, Recall, F1)
         try:
@@ -439,6 +464,7 @@ def get_dashboard_charts():
             charts['model_comparison'] = chart_json(fig9)
         except Exception as e:
             logger.error(f"Error generating model_comparison: {e}", exc_info=True)
+            charts['model_comparison'] = empty_chart()
         
         # 10. NEW: Feature Importance Comparison
         try:
@@ -477,6 +503,7 @@ def get_dashboard_charts():
             charts['feature_importance'] = chart_json(fig10)
         except Exception as e:
             logger.error(f"Error generating feature_importance: {e}", exc_info=True)
+            charts['feature_importance'] = empty_chart()
         
         # 11. NEW: Prediction Confidence Distribution
         try:
@@ -523,6 +550,7 @@ def get_dashboard_charts():
             charts['confidence_dist'] = chart_json(fig11)
         except Exception as e:
             logger.error(f"Error generating confidence_dist: {e}", exc_info=True)
+            charts['confidence_dist'] = empty_chart()
         
         # 12. NEW: Dataset Size Comparison
         try:
@@ -550,6 +578,7 @@ def get_dashboard_charts():
             charts['dataset_sizes'] = chart_json(fig12)
         except Exception as e:
             logger.error(f"Error generating dataset_sizes: {e}", exc_info=True)
+            charts['dataset_sizes'] = empty_chart()
         
         logger.info(f"Successfully generated {len(charts)} charts")
     except Exception as e:
@@ -557,9 +586,226 @@ def get_dashboard_charts():
     
     return charts
 
+# ─── Authentication Routes ────────────────────────────────────────────────────
+@app.route('/patient/complaint')
+@login_required
+@role_required('patient')
+def patient_complaint():
+    """Submit a new health complaint"""
+    from src.auth import auth_manager
+    doctors = auth_manager.get_users_by_role('doctor')
+    return render_template('patient_complaint.html', doctors=doctors)
+
+@app.route('/doctor/consultation')
+@login_required
+@role_required('doctor')
+def doctor_consultation():
+    """Doctor consultation page"""
+    return render_template('doctor_consultation.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """User login"""
+    if 'user_id' in session:
+        return redirect(url_for('dashboard_home'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        user = authenticate_user(username, password)
+        
+        if user:
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            session['role'] = user['role']
+            session['full_name'] = user['full_name']
+            
+            # Track login activity
+            recommendation_engine.track_user_activity(
+                user['id'], 'login', session_id=request.cookies.get('session')
+            )
+            
+            flash(f'Welcome back, {user["full_name"]}!', 'success')
+            logger.info(f"User logged in: {username} (Role: {user['role']})")
+            
+            # Redirect based on role
+            next_page = request.args.get('next')
+            if next_page:
+                return redirect(next_page)
+            return redirect(url_for('dashboard_home'))
+        else:
+            flash('Invalid username or password', 'danger')
+            logger.warning(f"Failed login attempt: {username}")
+    
+    return render_template('auth/login.html')
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Forgot password page"""
+    if request.method == 'POST':
+        email = request.form.get('email')
+        
+        # Check if email exists
+        conn = sqlite3.connect(os.path.join(BASE_DIR, 'data', 'healthcare.db'))
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, username FROM users WHERE email = ?', (email,))
+        user = cursor.fetchone()
+        conn.close()
+        
+        if user:
+            # In a real application, you would send an email with a reset link
+            # For now, we'll just show a success message
+            flash(f'Password reset instructions have been sent to {email}', 'success')
+            logger.info(f"Password reset requested for email: {email}")
+            return redirect(url_for('login'))
+        else:
+            # Don't reveal if email exists (security best practice)
+            flash('If an account exists with this email, you will receive reset instructions', 'info')
+            logger.warning(f"Password reset requested for non-existent email: {email}")
+            return redirect(url_for('login'))
+    
+    return render_template('auth/forgot_password.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """User registration"""
+    if 'user_id' in session:
+        return redirect(url_for('dashboard_home'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        role = request.form.get('role', 'patient')
+        full_name = request.form.get('full_name')
+        phone = request.form.get('phone')
+        
+        # Validation
+        if password != confirm_password:
+            flash('Passwords do not match', 'danger')
+            return render_template('auth/register.html')
+        
+        if len(password) < 6:
+            flash('Password must be at least 6 characters', 'danger')
+            return render_template('auth/register.html')
+        
+        # Create user
+        user_id = create_user(username, email, password, role, full_name, phone)
+        
+        if user_id:
+            # Create role-specific profile
+            if role == 'doctor':
+                specialization = request.form.get('specialization', 'General Practitioner')
+                license_number = request.form.get('license_number', f'LIC{user_id:06d}')
+                years_experience = int(request.form.get('years_experience', 0))
+                qualification = request.form.get('qualification', '')
+                create_doctor_profile(user_id, specialization, license_number, years_experience, qualification)
+            elif role == 'patient':
+                date_of_birth = request.form.get('date_of_birth')
+                gender = request.form.get('gender')
+                blood_group = request.form.get('blood_group')
+                create_patient_profile(user_id, date_of_birth, gender, blood_group)
+            
+            flash('Registration successful! Please log in.', 'success')
+            logger.info(f"New user registered: {username} (Role: {role})")
+            return redirect(url_for('login'))
+        else:
+            flash('Username or email already exists', 'danger')
+    
+    doctors = get_all_doctors()
+    return render_template('auth/register.html', doctors=doctors)
+
+@app.route('/logout')
+@login_required
+def logout():
+    """User logout"""
+    username = session.get('username', 'Unknown')
+    session.clear()
+    flash('You have been logged out successfully', 'info')
+    logger.info(f"User logged out: {username}")
+    return redirect(url_for('login'))
+
+# ─── Dashboard Routes ─────────────────────────────────────────────────────────
+@app.route('/dashboard')
+@login_required
+def dashboard_home():
+    """Main dashboard - redirects based on role"""
+    role = session.get('role')
+    
+    if role == 'admin':
+        return redirect(url_for('admin_dashboard'))
+    elif role == 'doctor':
+        return redirect(url_for('doctor_dashboard'))
+    elif role == 'patient':
+        return redirect(url_for('patient_dashboard'))
+    else:
+        return redirect(url_for('index'))
+
+@app.route('/dashboard/admin')
+@role_required('admin')
+def admin_dashboard():
+    """Admin dashboard with system analytics"""
+    dashboard_data = analytics_engine.generate_admin_dashboard_data()
+    return render_template('dashboards/admin_dashboard.html', data=dashboard_data)
+
+@app.route('/dashboard/doctor')
+@role_required('doctor')
+def doctor_dashboard():
+    """Doctor dashboard"""
+    doctor_id = session.get('user_id')
+    dashboard_data = analytics_engine.generate_doctor_dashboard_data(doctor_id)
+    patients = get_all_patients(doctor_id)
+    return render_template('dashboards/doctor_dashboard.html', 
+                         data=dashboard_data, patients=patients)
+
+@app.route('/dashboard/patient')
+@role_required('patient')
+def patient_dashboard():
+    """Patient dashboard with personalized recommendations"""
+    patient_id = session.get('user_id')
+    
+    # Get dashboard data
+    dashboard_data = analytics_engine.generate_patient_dashboard_data(patient_id)
+    
+    # Get personalized recommendations
+    context = {
+        'time_of_day': 'morning' if datetime.now().hour < 12 else 'evening',
+        'urgency': 'normal'
+    }
+    recommendations_raw = recommendation_engine.get_personalized_recommendations(patient_id, context, top_k=5)
+    
+    # Enhance with sentiment analysis
+    if recommendations_raw.get('medicines'):
+        recommendations_raw['medicines'] = sentiment_analyzer.get_sentiment_enhanced_recommendations(
+            patient_id, recommendations_raw['medicines']
+        )
+    
+    # Flatten recommendations for the template
+    recommendations = []
+    for category in ['medicines', 'treatments', 'specialists']:
+        if category in recommendations_raw:
+            recommendations.extend(recommendations_raw[category])
+    
+    # Sort by score
+    recommendations.sort(key=lambda x: x.get('score', 0), reverse=True)
+    
+    # Track dashboard view
+    recommendation_engine.track_user_activity(
+        patient_id, 'dashboard_view', session_id=request.cookies.get('session')
+    )
+    
+    return render_template('dashboards/patient_dashboard.html', 
+                         data=dashboard_data, recommendations=recommendations)
+
 # ─── Routes ───────────────────────────────────────────────────────────────────
 @app.route('/')
 def index():
+    # If logged in, redirect to dashboard
+    if 'user_id' in session:
+        return redirect(url_for('dashboard_home'))
+    
     stats = {
         'diabetes_records': len(diabetes_df),
         'heart_records':    len(heart_df),
@@ -574,8 +820,8 @@ def index():
     }
     return render_template('index.html', stats=stats)
 
-@app.route('/dashboard')
-def dashboard():
+@app.route('/analytics')
+def analytics_dashboard():
     charts = get_dashboard_charts()
     logger.info(f"Dashboard charts keys: {charts.keys()}")
     # Ensure all required charts exist, provide empty dict if missing
@@ -900,6 +1146,275 @@ def api_stats():
         'symptom_features': len(ALL_SYMPTOMS),
         'disease_classes':  len(DISEASE_NAMES),
     })
+
+# ─── Admin API Endpoints ──────────────────────────────────────────────────────
+@app.route('/api/admin/records/<record_type>')
+@login_required
+@role_required('admin')
+def get_admin_records(record_type):
+    """Get detailed records for admin dashboard modals"""
+    conn = sqlite3.connect(os.path.join(BASE_DIR, 'data', 'healthcare.db'))
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    records = []
+    
+    try:
+        if record_type == 'medical-records':
+            cursor.execute('''
+                SELECT 
+                    mr.id, mr.patient_id, mr.doctor_id, mr.record_type,
+                    mr.prediction_result, mr.confidence, mr.risk_score,
+                    mr.created_at,
+                    u1.full_name as patient_name,
+                    u2.full_name as doctor_name
+                FROM medical_records mr
+                LEFT JOIN users u1 ON mr.patient_id = u1.id
+                LEFT JOIN users u2 ON mr.doctor_id = u2.id
+                ORDER BY mr.created_at DESC
+            ''')
+            records = [dict(row) for row in cursor.fetchall()]
+            
+        elif record_type == 'prescriptions':
+            cursor.execute('''
+                SELECT 
+                    p.id, p.patient_id, p.doctor_id, p.medicine_name,
+                    p.dosage, p.frequency, p.duration, p.status,
+                    p.prescribed_at,
+                    u1.full_name as patient_name,
+                    u2.full_name as doctor_name
+                FROM prescriptions p
+                LEFT JOIN users u1 ON p.patient_id = u1.id
+                LEFT JOIN users u2 ON p.doctor_id = u2.id
+                ORDER BY p.prescribed_at DESC
+            ''')
+            records = [dict(row) for row in cursor.fetchall()]
+            
+        elif record_type == 'appointments':
+            cursor.execute('''
+                SELECT 
+                    a.id, a.patient_id, a.doctor_id, a.reason,
+                    a.appointment_date, a.status, a.created_at,
+                    u1.full_name as patient_name,
+                    u2.full_name as doctor_name
+                FROM appointments a
+                LEFT JOIN users u1 ON a.patient_id = u1.id
+                LEFT JOIN users u2 ON a.doctor_id = u2.id
+                ORDER BY a.appointment_date DESC
+            ''')
+            records = [dict(row) for row in cursor.fetchall()]
+            
+        elif record_type == 'users':
+            cursor.execute('''
+                SELECT 
+                    id, username, full_name, email, role, is_active,
+                    created_at
+                FROM users
+                ORDER BY created_at DESC
+            ''')
+            records = [dict(row) for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'record_type': record_type,
+            'count': len(records),
+            'records': records
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching {record_type}: {str(e)}")
+        conn.close()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ─── Patient Consultation API Endpoints ───────────────────────────────────────
+from src.consultation_system import consultation_system
+
+@app.route('/api/patient/complaint', methods=['POST'])
+@login_required
+@role_required('patient')
+def create_patient_complaint():
+    """Create a new patient complaint"""
+    try:
+        data = request.get_json()
+        patient_id = session.get('user_id')
+        doctor_id = data.get('doctor_id')
+        
+        complaint_id = consultation_system.create_complaint(
+            patient_id=patient_id,
+            title=data.get('title'),
+            description=data.get('description'),
+            symptoms=data.get('symptoms', []),
+            severity=data.get('severity', 'moderate')
+        )
+        
+        # Auto-assign if doctor selected
+        if doctor_id:
+            consultation_system.assign_complaint_to_doctor(complaint_id, int(doctor_id))
+            
+        logger.info(f"Patient {patient_id} created complaint {complaint_id}")
+        
+        return jsonify({
+            'success': True,
+            'complaint_id': complaint_id,
+            'message': 'Complaint submitted and assigned to doctor successfully'
+        })
+    except Exception as e:
+        logger.error(f"Error creating complaint: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/patient/complaints')
+@login_required
+@role_required('patient')
+def get_patient_complaints():
+    """Get all complaints for logged-in patient"""
+    try:
+        patient_id = session.get('user_id')
+        complaints = consultation_system.get_patient_complaints(patient_id)
+        
+        return jsonify({
+            'success': True,
+            'complaints': complaints
+        })
+    except Exception as e:
+        logger.error(f"Error fetching complaints: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/patient/complaint/<int:complaint_id>')
+@login_required
+@role_required('patient')
+def view_patient_complaint(complaint_id):
+    """View detailed complaint and recommendations"""
+    try:
+        complaint = consultation_system.get_complaint_details(complaint_id)
+        
+        # Security check: Ensure patient owns the complaint
+        if complaint['patient_id'] != session['user_id']:
+            flash("You are not authorized to view this complaint", "danger")
+            return redirect(url_for('patient_dashboard'))
+            
+        recommendations = consultation_system.get_complaint_recommendations(complaint_id)
+        messages = consultation_system.get_consultation_messages(complaint_id)
+        
+        return render_template('patient_complaint_detail.html',
+                             complaint=complaint,
+                             recommendations=recommendations,
+                             messages=messages)
+    except Exception as e:
+        logger.error(f"Error viewing complaint: {str(e)}")
+        flash('Error loading complaint', 'danger')
+        return redirect(url_for('patient_dashboard'))
+
+# ─── Doctor Consultation API Endpoints ────────────────────────────────────────
+
+@app.route('/api/doctor/complaints')
+@login_required
+@role_required('doctor')
+def get_doctor_complaints():
+    """Get all complaints assigned to doctor"""
+    try:
+        doctor_id = session.get('user_id')
+        complaints = consultation_system.get_doctor_complaints(doctor_id)
+        
+        return jsonify({
+            'success': True,
+            'complaints': complaints
+        })
+    except Exception as e:
+        logger.error(f"Error fetching doctor complaints: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/doctor/complaint/<int:complaint_id>')
+@login_required
+@role_required('doctor')
+def get_doctor_complaint_detail(complaint_id):
+    """Get complaint details for doctor"""
+    try:
+        complaint = consultation_system.get_complaint_details(complaint_id)
+        
+        return jsonify({
+            'success': True,
+            'complaint': complaint
+        })
+    except Exception as e:
+        logger.error(f"Error fetching complaint detail: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/doctor/recommendation', methods=['POST'])
+@login_required
+@role_required('doctor')
+def create_doctor_recommendation():
+    """Create doctor recommendation for complaint"""
+    try:
+        data = request.get_json()
+        doctor_id = session.get('user_id')
+        
+        recommendation_id = consultation_system.create_recommendation(
+            complaint_id=data.get('complaint_id'),
+            doctor_id=doctor_id,
+            diagnosis=data.get('diagnosis'),
+            recommended_drugs=data.get('recommended_drugs', []),
+            treatment_plan=data.get('treatment_plan'),
+            notes=data.get('notes')
+        )
+        
+        logger.info(f"Doctor {doctor_id} created recommendation {recommendation_id}")
+        
+        return jsonify({
+            'success': True,
+            'recommendation_id': recommendation_id,
+            'message': 'Recommendation submitted successfully'
+        })
+    except Exception as e:
+        logger.error(f"Error creating recommendation: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ─── Drug Search API ──────────────────────────────────────────────────────────
+
+@app.route('/api/drugs/search')
+@login_required
+def search_drugs():
+    """Search for drugs"""
+    try:
+        query = request.args.get('q', '')
+        
+        if len(query) < 2:
+            return jsonify({
+                'success': False,
+                'error': 'Query too short'
+            }), 400
+        
+        drugs = consultation_system.search_drugs(query)
+        
+        return jsonify({
+            'success': True,
+            'drugs': drugs
+        })
+    except Exception as e:
+        logger.error(f"Error searching drugs: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 # Error handlers
 @app.errorhandler(404)

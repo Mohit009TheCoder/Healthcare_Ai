@@ -22,7 +22,7 @@
     </div>
     <div class="nav-links">
       <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">Home</a>
-      <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">Dashboard</a>
+      <a href="{{ url_for('analytics_dashboard') }}" class="nav-link {% if request.endpoint == 'analytics_dashboard' %}active{% endif %}">Dashboard</a>
       <div class="nav-dropdown">
         <a href="#" class="nav-link">Predict ▾</a>
         <div class="dropdown-menu">
@@ -32,6 +32,14 @@
         </div>
       </div>
       <a href="{{ url_for('recommend_drug') }}" class="nav-link {% if request.endpoint == 'recommend_drug' %}active{% endif %}">Drug Recommender</a>
+      
+      {% if session.user_id %}
+        <a href="{{ url_for('dashboard_home') }}" class="nav-link {% if 'dashboard' in request.endpoint %}active{% endif %}">My Dashboard</a>
+        <a href="{{ url_for('logout') }}" class="nav-link" style="color: var(--danger)">Logout ({{ session.username }})</a>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="nav-link {% if request.endpoint == 'login' %}active{% endif %}">Login</a>
+        <a href="{{ url_for('register') }}" class="nav-link {% if request.endpoint == 'register' %}active{% endif %}">Register</a>
+      {% endif %}
     </div>
   </nav>
 
