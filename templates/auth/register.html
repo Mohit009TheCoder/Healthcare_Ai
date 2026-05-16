@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register — MediAI Healthcare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='logo.jpg') }}">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #00d4ff;
+      --success: #00ff9d;
+      --danger: #ff4d6d;
+      --warning: #ffb703;
+      --purple: #a78bfa;
+      --bg: #060a14;
+      --card: #0d1424;
+      --text: #e2e8f0;
+      --muted: rgba(226,232,240,.5);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ── Layout ── */
+    .page {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 100vh;
+    }
+
+    @media (max-width: 900px) {
+      .page { grid-template-columns: 1fr; }
+      .left-panel { display: none; }
+    }
+
+    /* ══════════════════════════════════════
+       LEFT PANEL — Branding
+    ══════════════════════════════════════ */
+    .left-panel {
+      background: linear-gradient(155deg, #0a0e1a 0%, #0f172a 40%, #1a0a2e 100%);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 4rem;
+    }
+
+    /* Animated grid */
+    .left-panel::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,.06) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridMove 20s linear infinite;
+    }
+    @keyframes gridMove {
+      from { background-position: 0 0; }
+      to   { background-position: 50px 50px; }
+    }
+
+    /* Glow orbs */
+    .left-panel::after {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 55% 45% at 25% 30%, rgba(0,212,255,.12) 0%, transparent 65%),
+        radial-gradient(ellipse 45% 40% at 75% 75%, rgba(167,139,250,.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .left-content { position: relative; z-index: 1; }
+
+    .brand {
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 3rem;
+    }
+    .brand-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(0,212,255,.3);
+      overflow: hidden;
+    }
+    .brand-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .brand-name { font-size: 1.6rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .brand-version {
+      background: rgba(0,212,255,.15); color: var(--primary);
+      border: 1px solid rgba(0,212,255,.3); border-radius: 20px;
+      font-size: .7rem; font-weight: 700; padding: .2rem .6rem;
+      margin-left: .25rem;
+    }
+
+    .left-heading {
+      font-size: 2.8rem; font-weight: 900; line-height: 1.15;
+      margin-bottom: 1.25rem;
+    }
+    .left-heading span {
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .left-sub { color: var(--muted); font-size: 1rem; line-height: 1.65;
+      max-width: 400px; margin-bottom: 2.5rem; }
+
+    /* Features list */
+    .features { display: flex; flex-direction: column; gap: .9rem; margin-bottom: 3rem; }
+    .feature-item {
+      display: flex; align-items: center; gap: .9rem;
+      background: rgba(0,212,255,.05);
+      border: 1px solid rgba(0,212,255,.12);
+      border-radius: 10px; padding: .9rem 1.1rem;
+      transition: all .3s;
+    }
+    .feature-item:hover {
+      background: rgba(0,212,255,.1);
+      border-color: rgba(0,212,255,.25);
+      transform: translateX(4px);
+    }
+    .feature-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .feature-text { font-size: .88rem; }
+    .feature-title { font-weight: 700; color: var(--primary); margin-bottom: 1px; }
+    .feature-desc { color: var(--muted); font-size: .8rem; }
+
+    /* Stats row */
+    .stats-row { display: flex; gap: 1.5rem; }
+    .stat-item { text-align: center; }
+    .stat-num {
+      font-size: 1.8rem; font-weight: 900;
+      background: linear-gradient(135deg, var(--primary), var(--success));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .stat-lbl { font-size: .75rem; color: var(--muted); text-transform: uppercase;
+      letter-spacing: .8px; }
+
+    .back-link {
+      display: inline-flex; align-items: center; gap: .4rem;
+      color: var(--muted); font-size: .85rem; text-decoration: none;
+      margin-bottom: 2rem; transition: color .2s;
+    }
+    .back-link:hover { color: var(--primary); }
+
+    /* ══════════════════════════════════════
+       RIGHT PANEL — Form
+    ══════════════════════════════════════ */
+    .right-panel {
+      background: #080c18;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .form-wrap {
+      flex: 1;
+      padding: 3rem 3.5rem;
+      max-width: 520px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 600px) {
+      .form-wrap { padding: 2rem 1.5rem; }
+    }
+
+    .form-top {
+      margin-bottom: 2rem;
+    }
+    .form-top h2 {
+      font-size: 1.75rem; font-weight: 800; margin-bottom: .3rem;
+    }
+    .form-top p { color: var(--muted); font-size: .9rem; }
+
+    /* Alerts */
+    .alert {
+      padding: .85rem 1rem; border-radius: 10px;
+      margin-bottom: 1.25rem; font-size: .88rem; font-weight: 500;
+      display: flex; align-items: center; gap: .6rem;
+    }
+    .alert-danger { background: rgba(255,77,109,.1); border: 1px solid rgba(255,77,109,.35);
+      color: var(--danger); }
+    .alert-success { background: rgba(0,255,157,.08); border: 1px solid rgba(0,255,157,.25);
+      color: var(--success); }
+    .alert-info { background: rgba(0,212,255,.08); border: 1px solid rgba(0,212,255,.25);
+      color: var(--primary); }
+
+    /* Role Tabs */
+    .role-tabs {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: .75rem; margin-bottom: 2rem;
+    }
+    .role-tab {
+      padding: 1rem .75rem; border-radius: 12px; cursor: pointer;
+      border: 2px solid rgba(0,212,255,.15);
+      background: rgba(0,212,255,.03);
+      text-align: center; transition: all .25s;
+      user-select: none;
+    }
+    .role-tab .t-icon { font-size: 2rem; display: block; margin-bottom: .3rem; }
+    .role-tab .t-name { font-size: .95rem; font-weight: 700; display: block; }
+    .role-tab .t-desc { font-size: .75rem; color: var(--muted); display: block;
+      margin-top: .15rem; }
+    .role-tab.active {
+      border-color: var(--primary);
+      background: rgba(0,212,255,.1);
+      box-shadow: 0 0 24px rgba(0,212,255,.15), inset 0 0 12px rgba(0,212,255,.05);
+    }
+    .role-tab.active .t-name { color: var(--primary); }
+    .role-tab.active .t-desc { color: rgba(0,212,255,.7); }
+
+    /* Section label */
+    .sec-label {
+      font-size: .72rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1.5px;
+      margin: 1.5rem 0 1rem;
+      display: flex; align-items: center; gap: .75rem;
+    }
+    .sec-label::after { content: ''; flex: 1; height: 1px;
+      background: rgba(0,212,255,.12); }
+
+    /* Form grid */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+    @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+
+    .fg { margin-bottom: 1rem; }
+    .fg label {
+      display: block; margin-bottom: .4rem;
+      font-size: .78rem; font-weight: 600;
+      color: rgba(226,232,240,.7); letter-spacing: .2px;
+    }
+    .fg input, .fg select {
+      width: 100%; padding: .72rem 1rem;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(0,212,255,.18);
+      border-radius: 10px; color: var(--text);
+      font-family: inherit; font-size: .92rem;
+      transition: all .22s;
+      -webkit-appearance: none;
+    }
+    .fg input:focus, .fg select:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: rgba(0,212,255,.07);
+      box-shadow: 0 0 0 3px rgba(0,212,255,.1);
+    }
+    .fg input::placeholder { color: rgba(226,232,240,.25); }
+    .fg select option { background: #0d1424; color: var(--text); }
+
+    /* Password strength */
+    .pwd-bar-wrap { height: 3px; border-radius: 3px; margin-top: .4rem;
+      background: rgba(255,255,255,.06); overflow: hidden; }
+    .pwd-bar { height: 100%; border-radius: 3px; width: 0; transition: all .35s; }
+
+    /* Role sections */
+    .role-section { display: none; }
+    .role-section.show { display: block; }
+
+    /* Submit */
+    .btn-submit {
+      width: 100%; padding: .95rem;
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      border: none; border-radius: 12px;
+      color: #060a14; font-weight: 800; font-size: 1rem;
+      cursor: pointer; transition: all .28s;
+      font-family: inherit; letter-spacing: .2px;
+      margin-top: .75rem;
+      position: relative; overflow: hidden;
+    }
+    .btn-submit::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,.18) 100%);
+      opacity: 0; transition: opacity .25s;
+    }
+    .btn-submit:hover { transform: translateY(-2px);
+      box-shadow: 0 12px 36px rgba(0,212,255,.4); }
+    .btn-submit:hover::after { opacity: 1; }
+    .btn-submit:active { transform: translateY(0); }
+
+    /* Login link */
+    .form-footer {
+      text-align: center; margin-top: 1.75rem;
+      font-size: .88rem; color: var(--muted);
+      padding-bottom: 2rem;
+    }
+    .form-footer a { color: var(--primary); font-weight: 600;
+      text-decoration: none; }
+    .form-footer a:hover { text-decoration: underline; }
+
+    /* Scrollbar */
+    .right-panel::-webkit-scrollbar { width: 6px; }
+    .right-panel::-webkit-scrollbar-track { background: transparent; }
+    .right-panel::-webkit-scrollbar-thumb { background: rgba(0,212,255,.2);
+      border-radius: 6px; }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ══ LEFT PANEL ══ -->
+  <div class="left-panel">
+    <div class="left-content">
+      <a href="/" class="back-link">← Back to Home</a>
+
+      <div class="brand">
+        <div class="brand-icon"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="MediAI Logo"></div>
+        <div>
+          <span class="brand-name">MediAI</span>
+          <span class="brand-version">v3.0</span>
+        </div>
+      </div>
+
+      <h2 class="left-heading">
+        Your health,<br>powered by <span>AI</span>
+      </h2>
+      <p class="left-sub">
+        Join thousands of patients and doctors using our intelligent healthcare platform
+        for smarter diagnoses, personalized treatments, and better outcomes.
+      </p>
+
+      <div class="features">
+        <div class="feature-item">
+          <span class="feature-icon">🤖</span>
+          <div class="feature-text">
+            <div class="feature-title">AI-Powered Diagnosis</div>
+            <div class="feature-desc">ML models trained on thousands of medical records</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">👨‍⚕️</span>
+          <div class="feature-text">
+            <div class="feature-title">Expert Doctor Network</div>
+            <div class="feature-desc">Connect with certified specialists by degree & specialty</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">💊</span>
+          <div class="feature-text">
+            <div class="feature-title">Smart Drug Recommendations</div>
+            <div class="feature-desc">Evidence-based medicine with side-effect analysis</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">🔒</span>
+          <div class="feature-text">
+            <div class="feature-title">Secure & Private</div>
+            <div class="feature-desc">End-to-end encrypted health records</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-num">3K+</div>
+          <div class="stat-lbl">Patients</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">97%</div>
+          <div class="stat-lbl">Accuracy</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">42</div>
+          <div class="stat-lbl">Diseases</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">2.4K</div>
+          <div class="stat-lbl">Drugs</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RIGHT PANEL ══ -->
+  <div class="right-panel">
+    <div class="form-wrap">
+
+      <div class="form-top">
+        <h2>Create Account</h2>
+        <p>Sign up to access your personalised healthcare portal</p>
+      </div>
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            {% if category == 'danger' %}⚠️{% elif category == 'success' %}✅{% else %}ℹ️{% endif %}
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('register') }}" id="regForm">
+
+        <!-- Role Tabs -->
+        <div class="role-tabs">
+          <div class="role-tab active" id="tab-patient" onclick="setRole('patient')">
+            <span class="t-icon">🧑‍🦱</span>
+            <span class="t-name">Patient</span>
+            <span class="t-desc">Register as patient</span>
+          </div>
+          <div class="role-tab" id="tab-doctor" onclick="setRole('doctor')">
+            <span class="t-icon">👨‍⚕️</span>
+            <span class="t-name">Doctor</span>
+            <span class="t-desc">Register as doctor</span>
+          </div>
+        </div>
+        <input type="hidden" name="role" id="roleInput" value="patient">
+
+        <!-- Basic Info -->
+        <div class="sec-label">Basic Information</div>
+
+        <div class="form-row">
+          <div class="fg">
+            <label>Full Name *</label>
+            <input type="text" name="full_name" placeholder="e.g. Rahul Sharma" required>
+          </div>
+          <div class="fg">
+            <label>Username *</label>
+            <input type="text" name="username" placeholder="e.g. rahul99" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="fg">
+            <label>Email Address *</label>
+            <input type="email" name="email" placeholder="you@example.com" required>
+          </div>
+          <div class="fg">
+            <label>Phone Number</label>
+            <input type="tel" name="phone" placeholder="+91 98765 43210">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="fg">
+            <label>Password *</label>
+            <input type="password" name="password" id="pwdInput"
+                   placeholder="Min. 6 characters" required oninput="strengthCheck(this.value)">
+            <div class="pwd-bar-wrap"><div class="pwd-bar" id="pwdBar"></div></div>
+          </div>
+          <div class="fg">
+            <label>Confirm Password *</label>
+            <input type="password" name="confirm_password" placeholder="Repeat password" required>
+          </div>
+        </div>
+
+        <!-- ─── PATIENT SECTION ─── -->
+        <div class="role-section show" id="sec-patient">
+          <div class="sec-label">Patient Details</div>
+          <div class="form-row">
+            <div class="fg">
+              <label>Date of Birth</label>
+              <input type="date" name="date_of_birth">
+            </div>
+            <div class="fg">
+              <label>Gender</label>
+              <select name="gender">
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Blood Group</label>
+            <select name="blood_group">
+              <option value="">Select blood group</option>
+              <option>A+</option><option>A-</option>
+              <option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option>
+              <option>O+</option><option>O-</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ─── DOCTOR SECTION ─── -->
+        <div class="role-section" id="sec-doctor">
+          <div class="sec-label">Professional Details</div>
+          <div class="form-row">
+            <div class="fg">
+              <label>Specialization *</label>
+              <select name="specialization">
+                <option value="General Practitioner">General Practitioner</option>
+                <option value="Cardiologist">Cardiologist</option>
+                <option value="Neurologist">Neurologist</option>
+                <option value="Dermatologist">Dermatologist</option>
+                <option value="Orthopedist">Orthopedist</option>
+                <option value="Pediatrician">Pediatrician</option>
+                <option value="Psychiatrist">Psychiatrist</option>
+                <option value="Oncologist">Oncologist</option>
+                <option value="Endocrinologist">Endocrinologist</option>
+                <option value="Gastroenterologist">Gastroenterologist</option>
+                <option value="Pulmonologist">Pulmonologist</option>
+                <option value="Nephrologist">Nephrologist</option>
+                <option value="Diabetologist">Diabetologist</option>
+                <option value="ENT Specialist">ENT Specialist</option>
+                <option value="Ophthalmologist">Ophthalmologist</option>
+                <option value="Rheumatologist">Rheumatologist</option>
+                <option value="Urologist">Urologist</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label>Qualification *</label>
+              <select name="qualification">
+                <option value="">Select degree</option>
+                <option value="MBBS">MBBS</option>
+                <option value="MD">MD — Doctor of Medicine</option>
+                <option value="MS">MS — Master of Surgery</option>
+                <option value="DM">DM — Doctorate of Medicine</option>
+                <option value="MCh">MCh — Master of Chirurgie</option>
+                <option value="DNB">DNB — Diplomate of NB</option>
+                <option value="BDS">BDS — Dental Surgery</option>
+                <option value="MDS">MDS — Dental Surgery PG</option>
+                <option value="BHMS">BHMS — Homeopathy</option>
+                <option value="BAMS">BAMS — Ayurveda</option>
+                <option value="PhD">PhD — Medical Sciences</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="fg">
+              <label>Years of Experience</label>
+              <input type="number" name="years_experience" placeholder="e.g. 5" min="0" max="60" value="0">
+            </div>
+            <div class="fg">
+              <label>License Number</label>
+              <input type="text" name="license_number" placeholder="e.g. MCI/2024/12345">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">
+          🚀 &nbsp; Create My Account
+        </button>
+      </form>
+
+      <div class="form-footer">
+        Already have an account?
+        <a href="{{ url_for('login') }}">Sign in here</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function setRole(role) {
+  document.getElementById('roleInput').value = role;
+  document.getElementById('tab-patient').classList.toggle('active', role === 'patient');
+  document.getElementById('tab-doctor').classList.toggle('active', role === 'doctor');
+  document.getElementById('sec-patient').classList.toggle('show', role === 'patient');
+  document.getElementById('sec-doctor').classList.toggle('show', role === 'doctor');
+  document.getElementById('submitBtn').innerHTML =
+    role === 'doctor'
+      ? '🩺 &nbsp; Register as Doctor'
+      : '🚀 &nbsp; Create My Account';
+}
+
+function strengthCheck(val) {
+  const bar = document.getElementById('pwdBar');
+  let s = 0;
+  if (val.length >= 6)  s++;
+  if (val.length >= 10) s++;
+  if (/[A-Z]/.test(val)) s++;
+  if (/[0-9]/.test(val)) s++;
+  if (/[^A-Za-z0-9]/.test(val)) s++;
+  const pcts   = [0, 20, 40, 65, 85, 100];
+  const colors = ['', '#ff4d6d', '#ffb703', '#00d4ff', '#a78bfa', '#00ff9d'];
+  bar.style.width = pcts[s] + '%';
+  bar.style.background = colors[s];
+}
+</script>
+</body>
+</html>

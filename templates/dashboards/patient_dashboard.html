@@ -1,399 +1,352 @@
 {% extends "base.html" %}
 
-{% block title %}Patient Dashboard - Healthcare System{% endblock %}
+{% block title %}Patient Dashboard - MediAI Healthcare{% endblock %}
 
 {% block content %}
 <style>
-    :root {
-        --primary: #00d4ff;
-        --success: #00ff9d;
-        --danger: #ff4d6d;
-        --warning: #ffb703;
-        --purple: #a78bfa;
-        --bg: #060a14;
-        --card: #0d1424;
-        --text: #e2e8f0;
-    }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-    body {
-        background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
-        color: var(--text);
-    }
+  :root {
+    --primary: #00d4ff;
+    --success: #00ff9d;
+    --danger: #ff4d6d;
+    --warning: #ffb703;
+    --purple: #a78bfa;
+    --bg: #060a14;
+    --card: #0d1424;
+    --text: #e2e8f0;
+    --text-muted: rgba(226,232,240,0.55);
+  }
 
-    .dashboard-container {
-        padding: 2rem;
-    }
+  * { box-sizing: border-box; }
 
-    .dashboard-header {
-        margin-bottom: 3rem;
-        border-bottom: 2px solid var(--primary);
-        padding-bottom: 1.5rem;
-    }
+  body {
+    background: linear-gradient(135deg, #0a0e1a 0%, #111827 60%, #0f172a 100%);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
 
-    .dashboard-header h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, var(--primary), var(--purple));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 0;
-    }
+  .dash-wrap { padding: 2rem; max-width: 1400px; margin: 0 auto; }
 
-    .stat-card {
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(167, 139, 250, 0.1));
-        border: 1px solid rgba(0, 212, 255, 0.3);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        transition: all 0.3s ease;
-    }
+  /* ── Header ── */
+  .dash-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(0,212,255,.15);
+  }
+  .dash-header h1 {
+    font-size: 2rem; font-weight: 800; margin: 0;
+    background: linear-gradient(135deg, var(--primary), var(--purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .dash-header p { color: var(--text-muted); margin: 0.3rem 0 0; font-size: 0.95rem; }
+  .header-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
-    .stat-card:hover {
-        border-color: var(--primary);
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
-    }
+  /* ── Buttons ── */
+  .btn { display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600;
+    font-size: 0.9rem; cursor: pointer; transition: all .25s; border: none;
+    text-decoration: none; font-family: inherit; }
+  .btn-primary { background: linear-gradient(135deg, var(--primary), var(--purple));
+    color: #060a14; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,212,255,.35); }
+  .btn-outline { background: transparent; border: 2px solid var(--primary);
+    color: var(--primary); }
+  .btn-outline:hover { background: rgba(0,212,255,.1); }
+  .btn-danger-outline { background: transparent; border: 2px solid var(--danger);
+    color: var(--danger); }
+  .btn-danger-outline:hover { background: rgba(255,77,109,.1); }
 
-    .stat-icon {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
-    }
+  /* ── Stats grid ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+    gap: 1.25rem; margin-bottom: 2.5rem; }
+  .stat-card {
+    background: rgba(13,20,36,.85); backdrop-filter: blur(12px);
+    border: 1px solid rgba(0,212,255,.18); border-radius: 14px;
+    padding: 1.5rem; transition: all .3s;
+  }
+  .stat-card:hover { border-color: var(--primary); transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,212,255,.18); }
+  .stat-icon { font-size: 2rem; margin-bottom: .6rem; }
+  .stat-label { font-size: .78rem; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 1.2px; margin-bottom: .4rem; }
+  .stat-value { font-size: 2.2rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--success));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .stat-value.sm { font-size: 1.1rem; }
 
-    .stat-label {
-        font-size: 0.9rem;
-        color: rgba(226, 232, 240, 0.7);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 0.5rem;
-    }
+  /* ── Section cards ── */
+  .section-card {
+    background: rgba(13,20,36,.85); backdrop-filter: blur(12px);
+    border: 1px solid rgba(0,212,255,.15); border-radius: 14px;
+    overflow: hidden; margin-bottom: 2rem;
+  }
+  .section-header {
+    background: linear-gradient(135deg, rgba(0,212,255,.12), rgba(167,139,250,.12));
+    border-bottom: 1px solid rgba(0,212,255,.2);
+    padding: 1.1rem 1.5rem; font-size: 1rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: space-between;
+    color: var(--primary);
+  }
+  .section-body { padding: 1.5rem; }
 
-    .stat-value {
-        font-size: 2.5rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, var(--primary), var(--success));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
+  /* ── Complaint cards ── */
+  .complaint-item {
+    background: rgba(0,212,255,.04); border: 1px solid rgba(0,212,255,.15);
+    border-radius: 10px; padding: 1.1rem 1.25rem; margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 1rem; transition: all .3s;
+  }
+  .complaint-item:hover { border-color: var(--primary); background: rgba(0,212,255,.08);
+    transform: translateX(4px); }
+  .complaint-item:last-child { margin-bottom: 0; }
+  .complaint-status { flex-shrink: 0; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+    margin-right: 6px; }
+  .status-pending .status-dot { background: var(--warning); box-shadow: 0 0 8px var(--warning); }
+  .status-assigned .status-dot { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+  .status-resolved .status-dot { background: var(--success); box-shadow: 0 0 8px var(--success); }
+  .complaint-title { font-weight: 600; margin-bottom: 2px; }
+  .complaint-meta { font-size: .82rem; color: var(--text-muted); }
+  .complaint-actions { margin-left: auto; }
+  .badge { padding: .3rem .8rem; border-radius: 20px; font-size: .78rem; font-weight: 600; }
+  .badge-pending { background: rgba(255,183,3,.15); color: var(--warning);
+    border: 1px solid rgba(255,183,3,.3); }
+  .badge-assigned { background: rgba(0,212,255,.15); color: var(--primary);
+    border: 1px solid rgba(0,212,255,.3); }
+  .badge-resolved { background: rgba(0,255,157,.15); color: var(--success);
+    border: 1px solid rgba(0,255,157,.3); }
+  .badge-severe { background: rgba(255,77,109,.15); color: var(--danger);
+    border: 1px solid rgba(255,77,109,.3); }
 
-    .section-card {
-        background: rgba(13, 20, 36, 0.8);
-        border: 1px solid rgba(0, 212, 255, 0.2);
-        border-radius: 12px;
-        overflow: hidden;
-        margin-bottom: 2rem;
-        backdrop-filter: blur(10px);
-    }
+  /* ── Recommendations ── */
+  .rec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+    gap: 1rem; }
+  .rec-card { background: rgba(0,212,255,.05); border-left: 4px solid var(--primary);
+    border-radius: 10px; padding: 1.2rem; transition: all .3s; }
+  .rec-card:hover { background: rgba(0,212,255,.1); transform: translateX(4px); }
+  .rec-name { font-weight: 700; color: var(--primary); margin-bottom: .3rem; }
+  .rec-score { display: inline-block; background: linear-gradient(135deg,var(--primary),var(--success));
+    color: var(--bg); padding: .15rem .65rem; border-radius: 20px; font-size: .8rem;
+    font-weight: 700; margin-bottom: .4rem; }
+  .rec-reason { font-size: .88rem; color: var(--text-muted); }
 
-    .section-header {
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(167, 139, 250, 0.15));
-        border-bottom: 2px solid var(--primary);
-        padding: 1.5rem;
-        font-size: 1.2rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
+  /* ── Table ── */
+  table.tbl { width: 100%; border-collapse: collapse; }
+  .tbl th { color: var(--primary); font-size: .78rem; text-transform: uppercase;
+    letter-spacing: 1px; padding: .8rem 1rem; text-align: left;
+    border-bottom: 2px solid rgba(0,212,255,.2); }
+  .tbl td { padding: .85rem 1rem; border-bottom: 1px solid rgba(0,212,255,.08);
+    font-size: .9rem; }
+  .tbl tbody tr:hover { background: rgba(0,212,255,.04); }
 
-    .section-body {
-        padding: 1.5rem;
-    }
+  /* ── Health tips ── */
+  .tip-row { display: flex; gap: 1rem; align-items: flex-start;
+    padding: .9rem; background: rgba(0,212,255,.04);
+    border-left: 3px solid var(--success); border-radius: 8px; margin-bottom: .75rem; }
+  .tip-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .tip-text { font-size: .92rem; color: rgba(226,232,240,.88); }
 
-    .recommendation-card {
-        background: rgba(0, 212, 255, 0.05);
-        border-left: 4px solid var(--primary);
-        padding: 1.5rem;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-        transition: all 0.3s ease;
-    }
+  /* ── Two-col layout ── */
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr));
+    gap: 1.5rem; }
 
-    .recommendation-card:hover {
-        background: rgba(0, 212, 255, 0.1);
-        transform: translateX(5px);
-    }
+  /* ── Empty state ── */
+  .empty { text-align: center; padding: 2.5rem; color: var(--text-muted); }
+  .empty-icon { font-size: 3rem; margin-bottom: .8rem; }
 
-    .recommendation-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--primary);
-        margin-bottom: 0.5rem;
-    }
-
-    .recommendation-score {
-        display: inline-block;
-        background: linear-gradient(135deg, var(--primary), var(--success));
-        color: var(--bg);
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-
-    .recommendation-text {
-        font-size: 0.9rem;
-        color: rgba(226, 232, 240, 0.8);
-    }
-
-    .table-custom {
-        color: var(--text);
-        width: 100%;
-    }
-
-    .table-custom thead {
-        background: rgba(0, 212, 255, 0.1);
-        border-bottom: 2px solid var(--primary);
-    }
-
-    .table-custom th {
-        color: var(--primary);
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        letter-spacing: 1px;
-        padding: 1rem;
-    }
-
-    .table-custom tbody tr {
-        border-bottom: 1px solid rgba(0, 212, 255, 0.1);
-        transition: all 0.3s ease;
-    }
-
-    .table-custom tbody tr:hover {
-        background: rgba(0, 212, 255, 0.05);
-    }
-
-    .table-custom td {
-        padding: 1rem;
-    }
-
-    .badge-custom {
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-
-    .badge-success {
-        background: rgba(0, 255, 157, 0.2);
-        color: var(--success);
-        border: 1px solid var(--success);
-    }
-
-    .badge-danger {
-        background: rgba(255, 77, 109, 0.2);
-        color: var(--danger);
-        border: 1px solid var(--danger);
-    }
-
-    .tip-item {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 1rem;
-        padding: 1rem;
-        background: rgba(0, 212, 255, 0.05);
-        border-radius: 8px;
-        border-left: 3px solid var(--success);
-    }
-
-    .tip-icon {
-        font-size: 1.5rem;
-        flex-shrink: 0;
-    }
-
-    .tip-text {
-        font-size: 0.95rem;
-        color: rgba(226, 232, 240, 0.9);
-    }
-
-    .btn-custom {
-        background: linear-gradient(135deg, var(--primary), var(--purple));
-        border: none;
-        color: var(--bg);
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-block;
-    }
-
-    .btn-custom:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
-    }
-
-    .btn-custom-outline {
-        background: transparent;
-        border: 2px solid var(--primary);
-        color: var(--primary);
-        padding: 0.65rem 1.4rem;
-    }
-
-    .btn-custom-outline:hover {
-        background: rgba(0, 212, 255, 0.1);
-    }
-
-    .grid-4 {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
-    }
-
-    .grid-2 {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1.5rem;
-    }
-
-    .timestamp {
-        text-align: center;
-        color: rgba(226, 232, 240, 0.5);
-        font-size: 0.9rem;
-        margin-top: 2rem;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(0, 212, 255, 0.1);
-    }
+  /* ── Timestamp ── */
+  .ts { text-align: center; color: var(--text-muted); font-size: .85rem;
+    margin-top: 1.5rem; padding-top: 1rem;
+    border-top: 1px solid rgba(0,212,255,.08); }
 </style>
 
-<div class="dashboard-container">
-    <!-- Header -->
-    <div class="dashboard-header">
-        <h1>🧑‍🦱 Patient Dashboard</h1>
-        <p style="color: rgba(226, 232, 240, 0.7); margin-top: 0.5rem;">Your Health Overview & Recommendations</p>
-    </div>
+<div class="dash-wrap">
 
-    <!-- Key Metrics -->
-    <div class="grid-4">
-        <div class="stat-card">
-            <div class="stat-icon">📋</div>
-            <div class="stat-label">Medical Records</div>
-            <div class="stat-value">{{ data.total_records }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">💊</div>
-            <div class="stat-label">Active Prescriptions</div>
-            <div class="stat-value">{{ data.active_prescriptions }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">📅</div>
-            <div class="stat-label">Upcoming Appointments</div>
-            <div class="stat-value">{{ data.upcoming_appointments }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">👨‍⚕️</div>
-            <div class="stat-label">Assigned Doctor</div>
-            <div class="stat-value" style="font-size: 1.2rem;">{{ data.assigned_doctor or '—' }}</div>
-        </div>
+  <!-- Header -->
+  <div class="dash-header">
+    <div>
+      <h1>🧑‍⚕️ Patient Dashboard</h1>
+      <p>Welcome back, <strong>{{ session.get('full_name', 'Patient') }}</strong> — your health overview &amp; portal</p>
     </div>
+    <div class="header-actions">
+      <a href="{{ url_for('patient_complaint') }}" class="btn btn-primary">📋 New Complaint</a>
+      <a href="{{ url_for('predict_symptoms') }}" class="btn btn-outline">🔍 Symptom Check</a>
+      <a href="{{ url_for('logout') }}" class="btn btn-danger-outline">🚪 Logout</a>
+    </div>
+  </div>
 
-    <!-- Personalized Recommendations -->
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">📋</div>
+      <div class="stat-label">Medical Records</div>
+      <div class="stat-value">{{ data.total_records }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">💊</div>
+      <div class="stat-label">Active Prescriptions</div>
+      <div class="stat-value">{{ data.active_prescriptions }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📅</div>
+      <div class="stat-label">Upcoming Appointments</div>
+      <div class="stat-value">{{ data.upcoming_appointments }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">👨‍⚕️</div>
+      <div class="stat-label">Assigned Doctor</div>
+      <div class="stat-value sm">{{ data.assigned_doctor or 'Not Assigned' }}</div>
+    </div>
+  </div>
+
+  <!-- My Complaints -->
+  <div class="section-card">
+    <div class="section-header">
+      <span>📝 My Health Complaints</span>
+      <a href="{{ url_for('patient_complaint') }}" class="btn btn-primary" style="font-size:.85rem; padding:.4rem .9rem;">+ New</a>
+    </div>
+    <div class="section-body">
+      <div id="complaintsList">
+        <div class="empty"><div class="empty-icon">⏳</div><p>Loading complaints…</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2-col: Recommendations + Recent Predictions -->
+  <div class="grid-2">
+    <!-- AI Recommendations -->
     <div class="section-card">
-        <div class="section-header">💊 Personalized Recommendations</div>
-        <div class="section-body">
-            {% if recommendations %}
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
-                    {% for rec in recommendations[:6] %}
-                    <div class="recommendation-card">
-                        <div class="recommendation-title">{{ rec.name }}</div>
-                        <div class="recommendation-score">{{ "%.0f"|format(rec.score * 100) }}% Match</div>
-                        <div class="recommendation-text">{{ rec.reason }}</div>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p style="color: rgba(226, 232, 240, 0.5); text-align: center; padding: 2rem;">
-                    No recommendations available yet. Complete a health assessment to get personalized recommendations.
-                </p>
-            {% endif %}
-        </div>
+      <div class="section-header">💊 Personalized Recommendations</div>
+      <div class="section-body">
+        {% if recommendations %}
+          <div class="rec-grid">
+            {% for rec in recommendations[:6] %}
+            <div class="rec-card">
+              <div class="rec-name">{{ rec.name }}</div>
+              <div class="rec-score">{{ "%.0f"|format(rec.score * 100) }}% Match</div>
+              <div class="rec-reason">{{ rec.reason }}</div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty">
+            <div class="empty-icon">🤖</div>
+            <p>Complete a health assessment to get personalized recommendations.</p>
+            <a href="{{ url_for('predict_symptoms') }}" class="btn btn-primary" style="margin-top:.8rem;">Start Symptom Check</a>
+          </div>
+        {% endif %}
+      </div>
     </div>
 
-    <!-- Health Info Section -->
-    <div class="grid-2">
-        <!-- Recent Predictions -->
-        <div class="section-card">
-            <div class="section-header">📊 Recent Predictions</div>
-            <div class="section-body">
-                {% if data.recent_predictions %}
-                    <table class="table-custom">
-                        <thead>
-                            <tr>
-                                <th>Type</th>
-                                <th>Result</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for pred in data.recent_predictions[:5] %}
-                            <tr>
-                                <td>{{ pred.type|title }}</td>
-                                <td>
-                                    {% if pred.result == 'Positive' %}
-                                        <span class="badge-custom badge-danger">{{ pred.result }}</span>
-                                    {% else %}
-                                        <span class="badge-custom badge-success">{{ pred.result }}</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ pred.date }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p style="color: rgba(226, 232, 240, 0.5); text-align: center; padding: 1rem;">No predictions yet</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Health Tips -->
-        <div class="section-card">
-            <div class="section-header">💡 Health Tips</div>
-            <div class="section-body">
-                <div class="tip-item">
-                    <div class="tip-icon">💧</div>
-                    <div class="tip-text">Stay hydrated - Drink at least 8 glasses of water daily</div>
-                </div>
-                <div class="tip-item">
-                    <div class="tip-icon">🏃</div>
-                    <div class="tip-text">Exercise regularly - Aim for 30 minutes of physical activity</div>
-                </div>
-                <div class="tip-item">
-                    <div class="tip-icon">🥗</div>
-                    <div class="tip-text">Eat healthy - Include fruits and vegetables in your diet</div>
-                </div>
-                <div class="tip-item">
-                    <div class="tip-icon">😴</div>
-                    <div class="tip-text">Sleep well - Get 7-8 hours of quality sleep</div>
-                </div>
-                <div class="tip-item">
-                    <div class="tip-icon">🧘</div>
-                    <div class="tip-text">Manage stress - Practice meditation or yoga</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
+    <!-- Recent Predictions -->
     <div class="section-card">
-        <div class="section-header">⚙️ Quick Actions</div>
-        <div class="section-body">
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <a href="{{ url_for('predict_diabetes') }}" class="btn-custom">🩺 Diabetes Check</a>
-                <a href="{{ url_for('predict_heart') }}" class="btn-custom">❤️ Heart Check</a>
-                <a href="{{ url_for('predict_symptoms') }}" class="btn-custom">🔍 Symptom Check</a>
-                <a href="{{ url_for('index') }}" class="btn-custom">🏠 Home</a>
-                <a href="{{ url_for('logout') }}" class="btn-custom btn-custom-outline">🚪 Logout</a>
+      <div class="section-header">📊 Recent Predictions</div>
+      <div class="section-body">
+        {% if data.recent_predictions %}
+          <table class="tbl">
+            <thead><tr><th>Type</th><th>Result</th><th>Date</th></tr></thead>
+            <tbody>
+              {% for pred in data.recent_predictions[:6] %}
+              <tr>
+                <td>{{ pred.type|title }}</td>
+                <td>
+                  {% if pred.result == 'Positive' %}
+                    <span class="badge badge-severe">{{ pred.result }}</span>
+                  {% else %}
+                    <span class="badge badge-resolved">{{ pred.result }}</span>
+                  {% endif %}
+                </td>
+                <td style="color:var(--text-muted)">{{ pred.date }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="empty">
+            <div class="empty-icon">📈</div>
+            <p>No predictions yet.</p>
+            <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;">
+              <a href="{{ url_for('predict_diabetes') }}" class="btn btn-outline" style="font-size:.85rem;">🩺 Diabetes</a>
+              <a href="{{ url_for('predict_heart') }}" class="btn btn-outline" style="font-size:.85rem;">❤️ Heart</a>
             </div>
-        </div>
+          </div>
+        {% endif %}
+      </div>
     </div>
+  </div>
 
-    <!-- Timestamp -->
-    <div class="timestamp">
-        Last updated: {{ data.get('timestamp', 'N/A') }}
+  <!-- Quick Actions + Health Tips -->
+  <div class="grid-2">
+    <div class="section-card">
+      <div class="section-header">⚙️ Quick Actions</div>
+      <div class="section-body">
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+          <a href="{{ url_for('predict_diabetes') }}" class="btn btn-outline">🩺 Diabetes Check</a>
+          <a href="{{ url_for('predict_heart') }}" class="btn btn-outline">❤️ Heart Check</a>
+          <a href="{{ url_for('predict_symptoms') }}" class="btn btn-outline">🔍 Symptom Check</a>
+          <a href="{{ url_for('recommend_drug') }}" class="btn btn-outline">💊 Drug Lookup</a>
+          <a href="{{ url_for('patient_complaint') }}" class="btn btn-primary">📋 New Complaint</a>
+        </div>
+      </div>
     </div>
+    <div class="section-card">
+      <div class="section-header">💡 Health Tips</div>
+      <div class="section-body">
+        <div class="tip-row"><div class="tip-icon">💧</div><div class="tip-text">Drink at least 8 glasses of water daily to stay hydrated.</div></div>
+        <div class="tip-row"><div class="tip-icon">🏃</div><div class="tip-text">30 minutes of physical activity helps maintain a healthy heart.</div></div>
+        <div class="tip-row"><div class="tip-icon">🥗</div><div class="tip-text">Eat a balanced diet rich in fruits, vegetables, and fibre.</div></div>
+        <div class="tip-row"><div class="tip-icon">😴</div><div class="tip-text">7–8 hours of quality sleep boosts immunity and mood.</div></div>
+        <div class="tip-row"><div class="tip-icon">🧘</div><div class="tip-text">Practice mindfulness or yoga to reduce chronic stress.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ts">Last updated: {{ data.get('timestamp', 'N/A') }}</div>
 </div>
 
+<script>
+async function loadComplaints() {
+  const container = document.getElementById('complaintsList');
+  try {
+    const resp = await fetch('/api/patient/complaints');
+    const data = await resp.json();
+
+    if (!data.complaints || data.complaints.length === 0) {
+      container.innerHTML = `<div class="empty"><div class="empty-icon">📭</div>
+        <p>You haven't submitted any complaints yet.</p>
+        <a href="{{ url_for('patient_complaint') }}" class="btn btn-primary" style="margin-top:.8rem;">📋 Submit Your First Complaint</a></div>`;
+      return;
+    }
+
+    const html = data.complaints.map(c => {
+      const statusClass = `status-${c.status}`;
+      const badgeClass = `badge-${c.status}`;
+      const severityBadge = c.severity === 'severe'
+        ? `<span class="badge badge-severe" style="margin-left:.5rem;">${c.severity.toUpperCase()}</span>` : '';
+      const doctor = c.doctor_name ? `👨‍⚕️ Dr. ${c.doctor_name}` : '⏳ Awaiting doctor assignment';
+      const date = new Date(c.created_at).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+
+      return `
+        <div class="complaint-item ${statusClass}">
+          <span class="status-dot"></span>
+          <div style="flex:1; min-width:0;">
+            <div class="complaint-title">${c.title} ${severityBadge}</div>
+            <div class="complaint-meta">${doctor} &nbsp;•&nbsp; ${date}</div>
+          </div>
+          <div class="complaint-actions" style="display:flex;gap:.5rem;align-items:center;flex-shrink:0;">
+            <span class="badge ${badgeClass}">${c.status.charAt(0).toUpperCase()+c.status.slice(1)}</span>
+            <a href="/patient/complaint/${c.id}" class="btn btn-outline" style="font-size:.8rem;padding:.35rem .75rem;">View</a>
+          </div>
+        </div>`;
+    }).join('');
+
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>Error loading complaints.</p></div>`;
+  }
+}
+loadComplaints();
+</script>
 {% endblock %}

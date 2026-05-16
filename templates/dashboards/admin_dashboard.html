@@ -118,28 +118,35 @@
 
     .metric-row {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 1.25rem;
         margin-bottom: 1rem;
     }
 
     .metric-item {
         background: rgba(0, 212, 255, 0.05);
         border-left: 3px solid var(--primary);
-        padding: 1rem;
-        border-radius: 6px;
+        padding: 1.25rem 1.5rem;
+        border-radius: 8px;
+        min-height: 90px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .metric-label {
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         color: rgba(226, 232, 240, 0.6);
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
     }
 
     .metric-value {
-        font-size: 1.8rem;
+        font-size: 2rem;
         font-weight: 700;
         color: var(--primary);
+        line-height: 1;
     }
 
     .table-custom {
@@ -157,6 +164,7 @@
         text-transform: uppercase;
         font-size: 0.85rem;
         letter-spacing: 1px;
+        padding: 1rem 1.25rem;
     }
 
     .table-custom tbody tr {
@@ -166,6 +174,12 @@
 
     .table-custom tbody tr:hover {
         background: rgba(0, 212, 255, 0.05);
+    }
+
+    .table-custom td {
+        padding: 0.9rem 1.25rem;
+        font-size: 0.95rem;
+        vertical-align: middle;
     }
 
     .badge-custom {
@@ -499,28 +513,35 @@
         <!-- Recommendation Performance -->
         <div class="section-card">
             <div class="section-header">📈 Recommendation Performance</div>
-            <div class="section-body">
+            <div class="section-body" style="padding: 0;">
                 {% if data.recommendation_performance %}
                     <table class="table-custom" style="width: 100%;">
                         <thead>
                             <tr>
-                                <th>Type</th>
-                                <th>CTR</th>
-                                <th>Conversion</th>
+                                <th style="width:50%;">Algorithm Type</th>
+                                <th style="width:25%; text-align:center;">CTR</th>
+                                <th style="width:25%; text-align:center;">Conversion</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for rec_type, metrics in data.recommendation_performance.items() %}
                             <tr>
-                                <td>{{ rec_type|title }}</td>
-                                <td><span class="badge-custom badge-primary">{{ "%.1f"|format(metrics.get('ctr', 0)) }}%</span></td>
-                                <td><span class="badge-custom badge-success">{{ "%.1f"|format(metrics.get('conversion', 0)) }}%</span></td>
+                                <td>
+                                    <div style="font-weight:600;">{{ rec_type.replace('_',' ').replace('-',' ') }}</div>
+                                    <div style="font-size:0.78rem;color:rgba(226,232,240,0.45);margin-top:2px;">{{ metrics.get('total_shown', 0) }} shown &nbsp;•&nbsp; {{ metrics.get('total_clicked', 0) }} clicked</div>
+                                </td>
+                                <td style="text-align:center;">
+                                    <span class="badge-custom badge-primary">{{ "%.1f"|format(metrics.get('ctr', 0)) }}%</span>
+                                </td>
+                                <td style="text-align:center;">
+                                    <span class="badge-custom badge-success">{{ "%.1f"|format(metrics.get('conversion', 0)) }}%</span>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 {% else %}
-                    <p style="color: rgba(226, 232, 240, 0.5);">No recommendation data available</p>
+                    <p style="color: rgba(226, 232, 240, 0.5); padding:1.5rem;">No recommendation data available</p>
                 {% endif %}
             </div>
         </div>
@@ -539,12 +560,14 @@
                             <div class="metric-label">Active Users</div>
                             <div class="metric-value">{{ data.user_engagement.get('total_users', 0) }}</div>
                         </div>
+                    </div>
+                    <div class="metric-row">
                         <div class="metric-item">
-                            <div class="metric-label">Avg Duration</div>
-                            <div class="metric-value">{{ data.user_engagement.get('avg_session_duration', 0) }}m</div>
+                            <div class="metric-label">Avg Session Duration</div>
+                            <div class="metric-value">{{ data.user_engagement.get('avg_session_duration', 0) }}<span style="font-size:1rem;font-weight:500;">m</span></div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-label">Pages/Session</div>
+                            <div class="metric-label">Pages / Session</div>
                             <div class="metric-value">{{ data.user_engagement.get('avg_pages_per_session', 0) }}</div>
                         </div>
                     </div>

@@ -87,83 +87,80 @@ class HealthcareAnalytics:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        
-        # Get recommendation stats by type
-        cursor.execute('''
-            SELECT 
-                recommendation_type,
-                COUNT(*) as total_shown,
-                SUM(CASE WHEN clicked = 1 THEN 1 ELSE 0 END) as total_clicked,
-                AVG(score) as avg_score
-            FROM recommendation_history
-            WHERE shown_at > datetime('now', '-{} days')
-            GROUP BY recommendation_type
-        '''.format(days))
-        
+
         performance = {}
-        for row in cursor.fetchall():
-            rec_type = row['recommendation_type']
-            total_shown = row['total_shown']
-            total_clicked = row['total_clicked']
-            
-            ctr = (total_clicked / total_shown * 100) if total_shown > 0 else 0
-            
-            performance[rec_type] = {
-                'total_shown': total_shown,
-                'total_clicked': total_clicked,
-                'click_through_rate': round(ctr, 2),
-                'avg_score': round(row['avg_score'], 3)
-            }
-        
+        try:
+            cursor.execute('''
+                SELECT
+                    recommendation_type,
+                    COUNT(*) as total_shown,
+                    SUM(CASE WHEN clicked = 1 THEN 1 ELSE 0 END) as total_clicked,
+                    AVG(score) as avg_score
+                FROM recommendation_history
+                WHERE shown_at > datetime('now', '-{} days')
+                GROUP BY recommendation_type
+            '''.format(days))
+
+            for row in cursor.fetchall():
+                rec_type = row['recommendation_type']
+                total_shown = row['total_shown'] or 0
+                total_clicked = row['total_clicked'] or 0
+                ctr = (total_clicked / total_shown * 100) if total_shown > 0 else 0
+                # Template uses metrics.get('ctr') and metrics.get('conversion')
+                performance[rec_type] = {
+                    'total_shown': total_shown,
+                    'total_clicked': total_clicked,
+                    'ctr': round(ctr, 1),
+                    'conversion': 0.0,
+                    'click_through_rate': round(ctr, 1),
+                    'avg_score': round(float(row['avg_score'] or 0), 3)
+                }
+        except Exception:
+            pass
+
+        # Add defaults ONLY for types NOT already returned from DB (prevents duplicates)
+        DEFAULT_TYPES = ['Collaborative', 'Content-based', 'Context-aware', 'Hybrid', 'Specialist']
+        for rt in DEFAULT_TYPES:
+            if rt not in performance:
+                performance[rt] = {'total_shown': 0, 'total_clicked': 0,
+                                   'ctr': 0.0, 'conversion': 0.0,
+                                   'click_through_rate': 0.0, 'avg_score': 0.0}
         conn.close()
         return performance
     
     def get_user_engagement_stats(self, user_id: int = None, days: int = 30) -> Dict:
-        """Get user engagement statistics"""
+        """Get user engagement statistics — keys match admin dashboard template"""
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        
-        if user_id:
-            # Individual user stats
+
+        # Base defaults that template expects
+        stats = {
+            'total_sessions': 0,
+            'total_users': 0,
+            'active_users': 0,
+            'avg_session_duration': 0,
+            'avg_pages_per_session': 0,
+            'total_activities': 0,
+        }
+
+        try:
             cursor.execute('''
-                SELECT 
-                    COUNT(DISTINCT DATE(timestamp)) as active_days,
-                    COUNT(*) as total_activities,
-                    COUNT(DISTINCT activity_type) as activity_types
-                FROM user_activities
-                WHERE user_id = ? AND timestamp > datetime('now', '-{} days')
-            '''.format(days), (user_id,))
-            
-            stats = dict(cursor.fetchone())
-            
-            # Get activity breakdown
-            cursor.execute('''
-                SELECT activity_type, COUNT(*) as count
-                FROM user_activities
-                WHERE user_id = ? AND timestamp > datetime('now', '-{} days')
-                GROUP BY activity_type
-            '''.format(days), (user_id,))
-            
-            stats['activity_breakdown'] = {row['activity_type']: row['count'] 
-                                          for row in cursor.fetchall()}
-        else:
-            # Overall system stats
-            cursor.execute('''
-                SELECT 
+                SELECT
                     COUNT(DISTINCT user_id) as active_users,
-                    COUNT(*) as total_activities,
-                    AVG(activities_per_user) as avg_activities_per_user
-                FROM (
-                    SELECT user_id, COUNT(*) as activities_per_user
-                    FROM user_activities
-                    WHERE timestamp > datetime('now', '-{} days')
-                    GROUP BY user_id
-                )
+                    COUNT(*) as total_activities
+                FROM user_activities
+                WHERE timestamp > datetime('now', '-{} days')
             '''.format(days))
-            
-            stats = dict(cursor.fetchone())
-        
+            row = cursor.fetchone()
+            if row:
+                stats['active_users'] = row['active_users'] or 0
+                stats['total_users'] = row['active_users'] or 0
+                stats['total_sessions'] = row['total_activities'] or 0
+                stats['total_activities'] = row['total_activities'] or 0
+        except Exception:
+            pass
+
         conn.close()
         return stats
     
@@ -343,89 +340,89 @@ class HealthcareAnalytics:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        
-        # Get doctor's patients
-        cursor.execute('''
-            SELECT COUNT(*) FROM patient_profiles
-            WHERE assigned_doctor_id = ?
-        ''', (doctor_id,))
+
+        cursor.execute('SELECT COUNT(*) FROM patient_profiles WHERE assigned_doctor_id = ?', (doctor_id,))
         total_patients = cursor.fetchone()[0]
-        
-        # Recent medical records
-        cursor.execute('''
-            SELECT COUNT(*) FROM medical_records
-            WHERE doctor_id = ? AND created_at > datetime('now', '-7 days')
-        ''', (doctor_id,))
+
+        cursor.execute("SELECT COUNT(*) FROM medical_records WHERE doctor_id = ? AND created_at > datetime('now', '-7 days')", (doctor_id,))
         recent_records = cursor.fetchone()[0]
-        
-        # Active prescriptions
-        cursor.execute('''
-            SELECT COUNT(*) FROM prescriptions
-            WHERE doctor_id = ? AND status = 'active'
-        ''', (doctor_id,))
+
+        cursor.execute("SELECT COUNT(*) FROM prescriptions WHERE doctor_id = ? AND status = 'active'", (doctor_id,))
         active_prescriptions = cursor.fetchone()[0]
-        
-        # Upcoming appointments
-        cursor.execute('''
-            SELECT COUNT(*) FROM appointments
-            WHERE doctor_id = ? AND status = 'scheduled' 
-            AND appointment_date > datetime('now')
-        ''', (doctor_id,))
+
+        cursor.execute("SELECT COUNT(*) FROM appointments WHERE doctor_id = ? AND status = 'scheduled' AND appointment_date > datetime('now')", (doctor_id,))
         upcoming_appointments = cursor.fetchone()[0]
-        
+
+        cursor.execute("SELECT COUNT(*) FROM patient_complaints WHERE assigned_doctor_id = ? AND status != 'resolved'", (doctor_id,))
+        pending_complaints = cursor.fetchone()[0]
+
         conn.close()
-        
+
         return {
             'total_patients': total_patients,
             'recent_records': recent_records,
             'active_prescriptions': active_prescriptions,
-            'upcoming_appointments': upcoming_appointments
+            'upcoming_appointments': upcoming_appointments,
+            'pending_complaints': pending_complaints,
+            'timestamp': datetime.now().strftime('%d %b %Y, %H:%M'),
         }
     
     def generate_patient_dashboard_data(self, patient_id: int) -> Dict:
-        """Generate data for patient dashboard"""
+        """Generate data for patient dashboard — keys match patient_dashboard.html template"""
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        
+
         # Medical records count
-        cursor.execute('''
-            SELECT COUNT(*) FROM medical_records
-            WHERE patient_id = ?
-        ''', (patient_id,))
+        cursor.execute('SELECT COUNT(*) FROM medical_records WHERE patient_id = ?', (patient_id,))
         total_records = cursor.fetchone()[0]
-        
+
         # Active prescriptions
-        cursor.execute('''
-            SELECT COUNT(*) FROM prescriptions
-            WHERE patient_id = ? AND status = 'active'
-        ''', (patient_id,))
+        cursor.execute("SELECT COUNT(*) FROM prescriptions WHERE patient_id = ? AND status = 'active'", (patient_id,))
         active_prescriptions = cursor.fetchone()[0]
-        
+
         # Upcoming appointments
-        cursor.execute('''
-            SELECT COUNT(*) FROM appointments
-            WHERE patient_id = ? AND status = 'scheduled'
-            AND appointment_date > datetime('now')
-        ''', (patient_id,))
+        cursor.execute("SELECT COUNT(*) FROM appointments WHERE patient_id = ? AND status = 'scheduled' AND appointment_date > datetime('now')", (patient_id,))
         upcoming_appointments = cursor.fetchone()[0]
-        
-        # Recent activities
+
+        # Assigned doctor name
         cursor.execute('''
-            SELECT activity_type, COUNT(*) as count
-            FROM user_activities
-            WHERE user_id = ? AND timestamp > datetime('now', '-7 days')
-            GROUP BY activity_type
+            SELECT u.full_name FROM users u
+            JOIN patient_profiles p ON p.assigned_doctor_id = u.id
+            WHERE p.user_id = ?
         ''', (patient_id,))
-        recent_activities = {row['activity_type']: row['count'] for row in cursor.fetchall()}
-        
+        doc_row = cursor.fetchone()
+        assigned_doctor = ('Dr. ' + doc_row['full_name']) if doc_row else None
+
+        # Recent predictions
+        cursor.execute('''
+            SELECT record_type as type, prediction_result as result,
+                   strftime('%d %b %Y', created_at) as date
+            FROM medical_records WHERE patient_id = ?
+            ORDER BY created_at DESC LIMIT 10
+        ''', (patient_id,))
+        recent_predictions = [dict(r) for r in cursor.fetchall()]
+
+        # Complaint stats
+        cursor.execute("SELECT COUNT(*) FROM patient_complaints WHERE patient_id = ?", (patient_id,))
+        total_complaints = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM patient_complaints WHERE patient_id = ? AND status = 'resolved'", (patient_id,))
+        resolved_complaints = cursor.fetchone()[0]
+
         conn.close()
-        
+
         return {
+            # Keys used by the rebuilt patient_dashboard.html
+            'total_records': total_records,
             'total_medical_records': total_records,
             'active_prescriptions': active_prescriptions,
             'upcoming_appointments': upcoming_appointments,
-            'recent_activities': recent_activities
+            'assigned_doctor': assigned_doctor,
+            'recent_predictions': recent_predictions,
+            'total_complaints': total_complaints,
+            'resolved_complaints': resolved_complaints,
+            'timestamp': datetime.now().strftime('%d %b %Y, %H:%M'),
         }
 
 # Initialize analytics engine

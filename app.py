@@ -40,7 +40,7 @@ from src.logger_config import setup_logger, log_prediction
 from src.auth import (
     authenticate_user, create_user, get_user_by_id, get_user_profile,
     create_doctor_profile, create_patient_profile, get_all_doctors, get_all_patients,
-    login_required, role_required, init_db
+    login_required, role_required, init_db, auth_manager
 )
 from src.recommendation_engine import recommendation_engine
 from src.sentiment_analysis import sentiment_analyzer
@@ -696,21 +696,27 @@ def register():
         
         if user_id:
             # Create role-specific profile
+            profile_success = True
             if role == 'doctor':
                 specialization = request.form.get('specialization', 'General Practitioner')
                 license_number = request.form.get('license_number', f'LIC{user_id:06d}')
                 years_experience = int(request.form.get('years_experience', 0))
                 qualification = request.form.get('qualification', '')
-                create_doctor_profile(user_id, specialization, license_number, years_experience, qualification)
+                profile_success = create_doctor_profile(user_id, specialization, license_number, years_experience, qualification)
             elif role == 'patient':
                 date_of_birth = request.form.get('date_of_birth')
                 gender = request.form.get('gender')
                 blood_group = request.form.get('blood_group')
-                create_patient_profile(user_id, date_of_birth, gender, blood_group)
+                profile_success = create_patient_profile(user_id, date_of_birth, gender, blood_group)
             
-            flash('Registration successful! Please log in.', 'success')
-            logger.info(f"New user registered: {username} (Role: {role})")
-            return redirect(url_for('login'))
+            if profile_success:
+                flash('Registration successful! Please log in.', 'success')
+                logger.info(f"New user registered: {username} (Role: {role})")
+                return redirect(url_for('login'))
+            else:
+                flash('User created but failed to create profile. Please contact support.', 'warning')
+                logger.error(f"Profile creation failed for user: {username} (Role: {role})")
+                return redirect(url_for('login'))
         else:
             flash('Username or email already exists', 'danger')
     
@@ -802,9 +808,6 @@ def patient_dashboard():
 # ─── Routes ───────────────────────────────────────────────────────────────────
 @app.route('/')
 def index():
-    # If logged in, redirect to dashboard
-    if 'user_id' in session:
-        return redirect(url_for('dashboard_home'))
     
     stats = {
         'diabetes_records': len(diabetes_df),
@@ -863,6 +866,8 @@ def test_chart_page():
 
 @app.route('/predict/diabetes', methods=['GET', 'POST'])
 @limiter.limit("10 per minute")
+@login_required
+@role_required('doctor', 'admin')
 def predict_diabetes():
     result = None
     if request.method == 'POST':
@@ -914,6 +919,8 @@ def predict_diabetes():
 
 @app.route('/predict/heart', methods=['GET', 'POST'])
 @limiter.limit("10 per minute")
+@login_required
+@role_required('doctor', 'admin')
 def predict_heart():
     result = None
     if request.method == 'POST':
@@ -964,6 +971,8 @@ def predict_heart():
 
 @app.route('/predict/symptoms', methods=['GET', 'POST'])
 @limiter.limit("10 per minute")
+@login_required
+@role_required('doctor', 'admin')
 def predict_symptoms():
     result = None
     if request.method == 'POST':
@@ -1050,6 +1059,8 @@ def predict_symptoms():
 
 @app.route('/recommend/drug', methods=['GET', 'POST'])
 @limiter.limit("20 per minute")
+@login_required
+@role_required('doctor', 'admin')
 def recommend_drug():
     result = None
     diseases   = sorted(drug_df['disease'].unique().tolist())
@@ -1317,6 +1328,123 @@ def view_patient_complaint(complaint_id):
 
 # ─── Doctor Consultation API Endpoints ────────────────────────────────────────
 
+@app.route('/doctor/consultation/complaint/<int:complaint_id>')
+@login_required
+@role_required('doctor')
+def doctor_view_complaint(complaint_id):
+    """Doctor's detailed view of a single patient complaint with AI prediction"""
+    try:
+        complaint = consultation_system.get_complaint_details(complaint_id)
+        # Security: only assigned doctor can view
+        if complaint.get('assigned_doctor_id') != session['user_id']:
+            flash('You are not authorised to view this complaint.', 'danger')
+            return redirect(url_for('doctor_dashboard'))
+        recommendations = consultation_system.get_complaint_recommendations(complaint_id)
+        messages = consultation_system.get_consultation_messages(complaint_id)
+        return render_template('doctor_complaint_review.html',
+                               complaint=complaint,
+                               recommendations=recommendations,
+                               messages=messages,
+                               all_symptoms=ALL_SYMPTOMS)
+    except Exception as e:
+        logger.error(f"Error loading complaint for doctor: {str(e)}")
+        flash('Error loading complaint', 'danger')
+        return redirect(url_for('doctor_consultation'))
+
+
+@app.route('/api/doctor/predict-symptoms', methods=['POST'])
+@login_required
+@role_required('doctor')
+def doctor_predict_symptoms():
+    """Doctor-side AI prediction from patient symptoms"""
+    try:
+        data = request.get_json()
+        selected = data.get('symptoms', [])
+        if not selected:
+            return jsonify({'success': False, 'error': 'No symptoms provided'}), 400
+
+        input_vec = symptoms_to_vector(selected)
+        proba_arr = symptom_model.predict_proba([input_vec])[0]
+        top5_idx  = np.argsort(proba_arr)[::-1][:5]
+        pred_idx  = top5_idx[0]
+        disease   = DISEASE_NAMES[pred_idx]
+        raw_prob  = float(proba_arr[pred_idx])
+
+        selected_clean = set(s.strip().lower().replace(' ', '_') for s in selected)
+        disease_syms   = DISEASE_SYM_MAP.get(disease, set())
+        matching       = len(selected_clean & disease_syms)
+        specificity    = matching / len(selected_clean) if selected_clean else 0
+        count_weight   = min(len(selected_clean) / 6, 1.0)
+        composite      = 0.30 * raw_prob + 0.50 * specificity + 0.20 * count_weight
+        confidence     = round(min(97.0, max(50.0, 65.0 + composite * 32.0)), 1)
+
+        top5 = [
+            {'disease': DISEASE_NAMES[top5_idx[k]],
+             'probability': round(float(proba_arr[top5_idx[k]]) / (sum(float(proba_arr[i]) for i in top5_idx) or 1) * 100, 1)}
+            for k in range(len(top5_idx))
+        ]
+
+        precautions = get_precautions(disease)
+        drug_recs   = recommend_drugs(disease, 'Medium')
+
+        return jsonify({
+            'success': True,
+            'disease':      disease,
+            'confidence':   confidence,
+            'top5':         top5,
+            'precautions':  precautions,
+            'drug_recs':    [{'name': d['medicine_name'], 'rating': round(d['avg_rating'], 1),
+                              'effectiveness': d.get('effectiveness', 'Unknown'),
+                              'side_effects': d.get('side_effects', 'Unknown'),
+                              'doctor_rec': d.get('doctor_rec', 0)} for d in drug_recs]
+        })
+    except Exception as e:
+        logger.error(f"Doctor AI prediction error: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/doctor/send-message', methods=['POST'])
+@login_required
+@role_required('doctor')
+def doctor_send_message():
+    """Doctor sends a message in a consultation thread"""
+    try:
+        data = request.get_json()
+        msg_id = consultation_system.send_message(
+            complaint_id=data.get('complaint_id'),
+            sender_id=session['user_id'],
+            sender_role='doctor',
+            message=data.get('message')
+        )
+        return jsonify({'success': True, 'message_id': msg_id})
+    except Exception as e:
+        logger.error(f"Doctor send message error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/patient/send-message', methods=['POST'])
+@login_required
+@role_required('patient')
+def patient_send_message():
+    """Patient sends a message in a consultation thread"""
+    try:
+        data = request.get_json()
+        # Verify ownership
+        complaint = consultation_system.get_complaint_details(data.get('complaint_id'))
+        if complaint['patient_id'] != session['user_id']:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        msg_id = consultation_system.send_message(
+            complaint_id=data.get('complaint_id'),
+            sender_id=session['user_id'],
+            sender_role='patient',
+            message=data.get('message')
+        )
+        return jsonify({'success': True, 'message_id': msg_id})
+    except Exception as e:
+        logger.error(f"Patient send message error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/doctor/complaints')
 @login_required
 @role_required('doctor')
@@ -1388,6 +1516,29 @@ def create_doctor_recommendation():
             'error': str(e)
         }), 500
 
+# ─── Disease Search API ─────────────────────────────────────────────────────────
+
+@app.route('/api/diseases/search')
+@login_required
+def search_diseases():
+    """Search for diseases in the world database"""
+    try:
+        query = request.args.get('q', '').lower()
+        
+        if len(query) < 2:
+            return jsonify({'success': False, 'error': 'Query too short'}), 400
+        
+        matches = world_df[world_df['disease'].str.lower().str.contains(query, na=False, regex=False)]
+        unique_diseases = matches['disease'].unique()[:20]
+        
+        return jsonify({
+            'success': True,
+            'diseases': [{'name': str(name)} for name in unique_diseases]
+        })
+    except Exception as e:
+        logger.error(f"Error searching diseases: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # ─── Drug Search API ──────────────────────────────────────────────────────────
 
 @app.route('/api/drugs/search')
@@ -1395,7 +1546,7 @@ def create_doctor_recommendation():
 def search_drugs():
     """Search for drugs"""
     try:
-        query = request.args.get('q', '')
+        query = request.args.get('q', '').lower()
         
         if len(query) < 2:
             return jsonify({
@@ -1403,7 +1554,10 @@ def search_drugs():
                 'error': 'Query too short'
             }), 400
         
-        drugs = consultation_system.search_drugs(query)
+        matches = drug_df[drug_df['medicine_name'].str.lower().str.contains(query, na=False, regex=False)]
+        unique_drugs = matches['medicine_name'].unique()[:20]
+        
+        drugs = [{'drug_name': str(name), 'dosage': ''} for name in unique_drugs]
         
         return jsonify({
             'success': True,

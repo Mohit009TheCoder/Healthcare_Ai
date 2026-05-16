@@ -244,6 +244,30 @@
     .error-message.show {
         display: block;
     }
+
+    /* Doctor filter & card styles */
+    .doc-filter-btn {
+        padding:.4rem 1rem; border-radius:20px; font-size:.82rem; font-weight:600;
+        cursor:pointer; border:1px solid rgba(0,212,255,.3);
+        background:rgba(0,212,255,.06); color:var(--text); transition:all .2s;
+    }
+    .doc-filter-btn.active, .doc-filter-btn:hover {
+        background:rgba(0,212,255,.2); border-color:var(--primary); color:var(--primary);
+    }
+    .doc-card {
+        background:rgba(0,212,255,.04); border:2px solid rgba(0,212,255,.15);
+        border-radius:10px; padding:1rem; cursor:pointer; transition:all .25s;
+        position:relative;
+    }
+    .doc-card:hover { border-color:var(--primary); background:rgba(0,212,255,.1); transform:translateY(-2px); }
+    .doc-card.selected { border-color:var(--success); background:rgba(0,255,157,.08); }
+    .doc-card .doc-check { position:absolute; top:.6rem; right:.6rem; font-size:1.2rem; display:none; }
+    .doc-card.selected .doc-check { display:block; }
+    .doc-name { font-weight:700; margin-bottom:.3rem; }
+    .doc-spec { font-size:.82rem; color:var(--primary); margin-bottom:.2rem; }
+    .doc-qual { font-size:.78rem; color:var(--muted,rgba(226,232,240,.6)); margin-bottom:.1rem; }
+    .doc-exp { font-size:.78rem; color:var(--muted,rgba(226,232,240,.6)); }
+
 </style>
 
 <div class="complaint-container">
@@ -264,15 +288,21 @@
 
     <!-- Complaint Form -->
     <form id="complaintForm" class="form-card">
-        <!-- Doctor Selection -->
+        <!-- Doctor Selection with Degree/Qualification Filter -->
         <div class="form-group">
-            <label class="form-label">👨‍⚕️ Select Doctor</label>
-            <select class="form-control" id="doctor_id" name="doctor_id" required>
-                <option value="" disabled selected>Select a doctor for consultation</option>
-                {% for doctor in doctors %}
-                <option value="{{ doctor.id }}">Dr. {{ doctor.full_name }} - {{ doctor.specialization or 'General Practitioner' }}</option>
-                {% endfor %}
-            </select>
+            <label class="form-label">👨‍⚕️ Select Doctor by Specialization / Degree</label>
+
+            <!-- Filter pills -->
+            <div id="doctorFilters" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;">
+                <button type="button" class="doc-filter-btn active" data-spec="all" onclick="filterDoctors('all',this)">🏥 All Doctors</button>
+            </div>
+
+            <!-- Doctor cards -->
+            <div id="doctorCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;"></div>
+
+            <!-- Hidden real input -->
+            <input type="hidden" id="doctor_id" name="doctor_id" required>
+            <div id="selectedDoctorInfo" style="display:none;margin-top:.75rem;padding:.75rem;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);border-radius:8px;font-size:.9rem;color:var(--primary);font-weight:600;"></div>
         </div>
 
         <!-- Title -->
@@ -476,6 +506,65 @@
 
     // Load complaints on page load
     loadRecentComplaints();
+
+    /* ── Doctor cards with degree/spec filtering ── */
+    const DOCTORS = [
+        {% for d in doctors %}
+        {id:{{d.id}}, name:"{{d.full_name}}", spec:"{{d.specialization or 'General Practitioner'}}",
+         qual:"{{d.qualification or ''|replace('"','')}}",
+         exp:{{d.years_experience or 0}} }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    function buildFilters() {
+        const specs = [...new Set(DOCTORS.map(d => d.spec))];
+        const wrap = document.getElementById('doctorFilters');
+        specs.forEach(spec => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'doc-filter-btn';
+            btn.dataset.spec = spec;
+            btn.textContent = spec;
+            btn.onclick = function(){ filterDoctors(spec, this); };
+            wrap.appendChild(btn);
+        });
+    }
+
+    function filterDoctors(spec, btn) {
+        document.querySelectorAll('.doc-filter-btn').forEach(b => b.classList.remove('active'));
+        if(btn) btn.classList.add('active');
+        const list = spec === 'all' ? DOCTORS : DOCTORS.filter(d => d.spec === spec);
+        renderDoctors(list);
+    }
+
+    function renderDoctors(list) {
+        const wrap = document.getElementById('doctorCards');
+        if (!list.length) {
+            wrap.innerHTML = '<p style="color:rgba(226,232,240,.5);">No doctors found for this specialization.</p>';
+            return;
+        }
+        const currentId = document.getElementById('doctor_id').value;
+        wrap.innerHTML = list.map(d => `
+            <div class="doc-card ${currentId == d.id ? 'selected' : ''}" onclick="selectDoctor(${d.id}, '${d.name}', '${d.spec}')">
+                <span class="doc-check">✅</span>
+                <div class="doc-name">Dr. ${d.name}</div>
+                <div class="doc-spec">🏥 ${d.spec}</div>
+                ${d.qual ? `<div class="doc-qual">🎓 ${d.qual}</div>` : ''}
+                <div class="doc-exp">📅 ${d.exp} year${d.exp !== 1 ? 's' : ''} experience</div>
+            </div>`).join('');
+    }
+
+    function selectDoctor(id, name, spec) {
+        document.getElementById('doctor_id').value = id;
+        const info = document.getElementById('selectedDoctorInfo');
+        info.textContent = `✅ Selected: Dr. ${name} — ${spec}`;
+        info.style.display = 'block';
+        document.querySelectorAll('.doc-card').forEach(c => c.classList.remove('selected'));
+        event.currentTarget.classList.add('selected');
+    }
+
+    buildFilters();
+    renderDoctors(DOCTORS);
 </script>
 
 {% endblock %}

@@ -1,277 +1,306 @@
 {% extends "base.html" %}
 
-{% block title %}Doctor Dashboard - Healthcare System{% endblock %}
+{% block title %}Doctor Dashboard - MediAI Healthcare{% endblock %}
 
 {% block content %}
 <style>
-    :root {
-        --primary: #00d4ff;
-        --success: #00ff9d;
-        --danger: #ff4d6d;
-        --warning: #ffb703;
-        --purple: #a78bfa;
-        --bg: #060a14;
-        --card: #0d1424;
-        --text: #e2e8f0;
-    }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-    body {
-        background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
-        color: var(--text);
-    }
+  :root {
+    --primary: #00d4ff;
+    --success: #00ff9d;
+    --danger: #ff4d6d;
+    --warning: #ffb703;
+    --purple: #a78bfa;
+    --bg: #060a14;
+    --card: #0d1424;
+    --text: #e2e8f0;
+    --muted: rgba(226,232,240,.55);
+  }
 
-    .dashboard-container {
-        padding: 2rem;
-    }
+  *, *::before, *::after { box-sizing: border-box; }
 
-    .dashboard-header {
-        margin-bottom: 3rem;
-        border-bottom: 2px solid var(--primary);
-        padding-bottom: 1.5rem;
-    }
+  body {
+    background: linear-gradient(135deg,#0a0e1a 0%,#111827 60%,#0f172a 100%);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
 
-    .dashboard-header h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, var(--primary), var(--purple));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 0;
-    }
+  .dash-wrap { padding: 2rem; max-width: 1400px; margin: 0 auto; }
 
-    .stat-card {
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(167, 139, 250, 0.1));
-        border: 1px solid rgba(0, 212, 255, 0.3);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        transition: all 0.3s ease;
-    }
+  /* ── Header ── */
+  .dash-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2.5rem; padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(0,212,255,.15);
+  }
+  .dash-header h1 {
+    font-size: 2rem; font-weight: 800; margin: 0;
+    background: linear-gradient(135deg,var(--primary),var(--purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .dash-header p { color: var(--muted); margin: .3rem 0 0; font-size: .95rem; }
+  .hdr-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
 
-    .stat-card:hover {
-        border-color: var(--primary);
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
-    }
+  /* ── Buttons ── */
+  .btn { display: inline-flex; align-items: center; gap: .4rem;
+    padding: .6rem 1.2rem; border-radius: 8px; font-weight: 600;
+    font-size: .9rem; cursor: pointer; transition: all .25s; border: none;
+    text-decoration: none; font-family: inherit; }
+  .btn-primary { background: linear-gradient(135deg,var(--primary),var(--purple)); color: #060a14; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,212,255,.35); }
+  .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+  .btn-outline:hover { background: rgba(0,212,255,.1); }
+  .btn-success { background: linear-gradient(135deg,var(--success),#00c975); color: #060a14; }
+  .btn-success:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,255,157,.3); }
+  .btn-danger-outline { background: transparent; border: 2px solid var(--danger); color: var(--danger); }
+  .btn-danger-outline:hover { background: rgba(255,77,109,.1); }
+  .btn-sm { font-size: .82rem; padding: .35rem .8rem; }
 
-    .stat-icon {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
-    }
+  /* ── Stats ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+    gap: 1.25rem; margin-bottom: 2.5rem; }
+  .stat-card {
+    background: rgba(13,20,36,.85); backdrop-filter: blur(12px);
+    border: 1px solid rgba(0,212,255,.18); border-radius: 14px;
+    padding: 1.5rem; transition: all .3s;
+  }
+  .stat-card:hover { border-color: var(--primary); transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,212,255,.18); }
+  .stat-icon { font-size: 2rem; margin-bottom: .6rem; }
+  .stat-label { font-size: .78rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 1.2px; margin-bottom: .4rem; }
+  .stat-value { font-size: 2.2rem; font-weight: 800;
+    background: linear-gradient(135deg,var(--primary),var(--success));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-    .stat-label {
-        font-size: 0.9rem;
-        color: rgba(226, 232, 240, 0.7);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 0.5rem;
-    }
+  /* ── Section cards ── */
+  .section-card {
+    background: rgba(13,20,36,.85); backdrop-filter: blur(12px);
+    border: 1px solid rgba(0,212,255,.15); border-radius: 14px;
+    overflow: hidden; margin-bottom: 2rem;
+  }
+  .section-header {
+    background: linear-gradient(135deg,rgba(0,212,255,.12),rgba(167,139,250,.12));
+    border-bottom: 1px solid rgba(0,212,255,.2);
+    padding: 1.1rem 1.5rem; font-size: 1rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: space-between; color: var(--primary);
+  }
+  .section-body { padding: 1.5rem; }
 
-    .stat-value {
-        font-size: 2.5rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, var(--primary), var(--success));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
+  /* ── Complaint items ── */
+  .complaint-item {
+    background: rgba(0,212,255,.04); border: 1px solid rgba(0,212,255,.15);
+    border-radius: 10px; padding: 1.1rem 1.25rem; margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 1rem; transition: all .3s;
+  }
+  .complaint-item:hover { border-color: var(--primary); background: rgba(0,212,255,.09);
+    transform: translateX(4px); }
+  .complaint-item:last-child { margin-bottom: 0; }
+  .complaint-severity { flex-shrink: 0; width: 12px; height: 12px; border-radius: 50%; }
+  .sev-mild { background: var(--success); box-shadow: 0 0 6px var(--success); }
+  .sev-moderate { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+  .sev-severe { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+  .complaint-info { flex: 1; min-width: 0; }
+  .complaint-name { font-weight: 700; margin-bottom: 2px; }
+  .complaint-patient { font-size: .82rem; color: var(--muted); }
+  .complaint-actions { display: flex; gap: .5rem; align-items: center; flex-shrink: 0; }
 
-    .section-card {
-        background: rgba(13, 20, 36, 0.8);
-        border: 1px solid rgba(0, 212, 255, 0.2);
-        border-radius: 12px;
-        overflow: hidden;
-        margin-bottom: 2rem;
-        backdrop-filter: blur(10px);
-    }
+  .badge { padding: .25rem .7rem; border-radius: 20px; font-size: .78rem; font-weight: 600; }
+  .badge-pending { background: rgba(255,183,3,.15); color: var(--warning); border: 1px solid rgba(255,183,3,.3); }
+  .badge-resolved { background: rgba(0,255,157,.15); color: var(--success); border: 1px solid rgba(0,255,157,.3); }
+  .badge-assigned { background: rgba(0,212,255,.15); color: var(--primary); border: 1px solid rgba(0,212,255,.3); }
 
-    .section-header {
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(167, 139, 250, 0.15));
-        border-bottom: 2px solid var(--primary);
-        padding: 1.5rem;
-        font-size: 1.2rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
+  /* ── Patients table ── */
+  table.tbl { width: 100%; border-collapse: collapse; }
+  .tbl th { color: var(--primary); font-size: .78rem; text-transform: uppercase;
+    letter-spacing: 1px; padding: .75rem 1rem; text-align: left;
+    border-bottom: 2px solid rgba(0,212,255,.2); }
+  .tbl td { padding: .8rem 1rem; border-bottom: 1px solid rgba(0,212,255,.08); font-size: .9rem; }
+  .tbl tbody tr:hover { background: rgba(0,212,255,.04); }
 
-    .section-body {
-        padding: 1.5rem;
-    }
+  /* ── Grid ── */
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit,minmax(320px,1fr)); gap: 1.5rem; }
 
-    .table-custom {
-        color: var(--text);
-        width: 100%;
-    }
+  /* ── Empty ── */
+  .empty { text-align: center; padding: 2.5rem; color: var(--muted); }
+  .empty-icon { font-size: 3rem; margin-bottom: .8rem; }
 
-    .table-custom thead {
-        background: rgba(0, 212, 255, 0.1);
-        border-bottom: 2px solid var(--primary);
-    }
+  /* ── Filter bar ── */
+  .filter-bar { display: flex; gap: .75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .filter-btn { padding: .45rem 1rem; border-radius: 20px; font-size: .82rem;
+    font-weight: 600; cursor: pointer; border: 1px solid rgba(0,212,255,.3);
+    background: rgba(0,212,255,.06); color: var(--text); transition: all .2s; }
+  .filter-btn.active, .filter-btn:hover { background: rgba(0,212,255,.2); border-color: var(--primary); }
 
-    .table-custom th {
-        color: var(--primary);
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        letter-spacing: 1px;
-        padding: 1rem;
-    }
-
-    .table-custom tbody tr {
-        border-bottom: 1px solid rgba(0, 212, 255, 0.1);
-        transition: all 0.3s ease;
-    }
-
-    .table-custom tbody tr:hover {
-        background: rgba(0, 212, 255, 0.05);
-    }
-
-    .table-custom td {
-        padding: 1rem;
-    }
-
-    .badge-custom {
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-
-    .badge-success {
-        background: rgba(0, 255, 157, 0.2);
-        color: var(--success);
-        border: 1px solid var(--success);
-    }
-
-    .badge-primary {
-        background: rgba(0, 212, 255, 0.2);
-        color: var(--primary);
-        border: 1px solid var(--primary);
-    }
-
-    .btn-custom {
-        background: linear-gradient(135deg, var(--primary), var(--purple));
-        border: none;
-        color: var(--bg);
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-block;
-    }
-
-    .btn-custom:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
-    }
-
-    .btn-custom-outline {
-        background: transparent;
-        border: 2px solid var(--primary);
-        color: var(--primary);
-        padding: 0.65rem 1.4rem;
-    }
-
-    .btn-custom-outline:hover {
-        background: rgba(0, 212, 255, 0.1);
-    }
-
-    .grid-4 {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
-    }
-
-    .timestamp {
-        text-align: center;
-        color: rgba(226, 232, 240, 0.5);
-        font-size: 0.9rem;
-        margin-top: 2rem;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(0, 212, 255, 0.1);
-    }
+  .ts { text-align: center; color: var(--muted); font-size: .85rem;
+    margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(0,212,255,.08); }
 </style>
 
-<div class="dashboard-container">
-    <!-- Header -->
-    <div class="dashboard-header">
-        <h1>👨‍⚕️ Doctor Dashboard</h1>
-        <p style="color: rgba(226, 232, 240, 0.7); margin-top: 0.5rem;">Patient Management & Overview</p>
-    </div>
+<div class="dash-wrap">
 
-    <!-- Key Metrics -->
-    <div class="grid-4">
-        <div class="stat-card">
-            <div class="stat-icon">👥</div>
-            <div class="stat-label">Total Patients</div>
-            <div class="stat-value">{{ data.total_patients }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">📋</div>
-            <div class="stat-label">Recent Records (7d)</div>
-            <div class="stat-value">{{ data.recent_records }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">💊</div>
-            <div class="stat-label">Active Prescriptions</div>
-            <div class="stat-value">{{ data.active_prescriptions }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">📅</div>
-            <div class="stat-label">Upcoming Appointments</div>
-            <div class="stat-value">{{ data.upcoming_appointments }}</div>
-        </div>
+  <!-- Header -->
+  <div class="dash-header">
+    <div>
+      <h1>👨‍⚕️ Doctor Dashboard</h1>
+      <p>Welcome, <strong>Dr. {{ session.get('full_name', 'Doctor') }}</strong> — patient management &amp; AI consultation</p>
     </div>
+    <div class="hdr-actions">
+      <a href="{{ url_for('doctor_consultation') }}" class="btn btn-primary">🩺 Consultation Panel</a>
+      <a href="{{ url_for('logout') }}" class="btn btn-danger-outline">🚪 Logout</a>
+    </div>
+  </div>
 
-    <!-- Patients List -->
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-label">Your Patients</div>
+      <div class="stat-value">{{ data.total_patients }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📋</div>
+      <div class="stat-label">Records (7d)</div>
+      <div class="stat-value">{{ data.recent_records }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">💊</div>
+      <div class="stat-label">Active Prescriptions</div>
+      <div class="stat-value">{{ data.active_prescriptions }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📅</div>
+      <div class="stat-label">Upcoming Appointments</div>
+      <div class="stat-value">{{ data.upcoming_appointments }}</div>
+    </div>
+    <div class="stat-card" id="pendingComplaintsStat">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-label">Pending Complaints</div>
+      <div class="stat-value" id="pendingCount">—</div>
+    </div>
+  </div>
+
+  <!-- Patient Complaints -->
+  <div class="section-card">
+    <div class="section-header">
+      <span>📩 Patient Complaints</span>
+      <div class="filter-bar" style="margin:0;">
+        <button class="filter-btn active" onclick="filterComplaints('all', this)">All</button>
+        <button class="filter-btn" onclick="filterComplaints('pending', this)">Pending</button>
+        <button class="filter-btn" onclick="filterComplaints('assigned', this)">Assigned</button>
+        <button class="filter-btn" onclick="filterComplaints('resolved', this)">Resolved</button>
+      </div>
+    </div>
+    <div class="section-body">
+      <div id="complaintsList">
+        <div class="empty"><div class="empty-icon">⏳</div><p>Loading patient complaints…</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2-col: Patients list + Quick actions -->
+  <div class="grid-2">
     <div class="section-card">
-        <div class="section-header">👥 Your Patients</div>
-        <div class="section-body">
-            {% if patients %}
-                <table class="table-custom">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for patient in patients %}
-                        <tr>
-                            <td>{{ patient.full_name }}</td>
-                            <td>{{ patient.email }}</td>
-                            <td>{{ patient.phone }}</td>
-                            <td><span class="badge-custom badge-success">Active</span></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p style="color: rgba(226, 232, 240, 0.5); text-align: center; padding: 2rem;">No patients assigned yet</p>
-            {% endif %}
-        </div>
+      <div class="section-header">👥 Your Patients</div>
+      <div class="section-body">
+        {% if patients %}
+          <table class="tbl">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th></tr></thead>
+            <tbody>
+              {% for p in patients %}
+              <tr>
+                <td><strong>{{ p.full_name }}</strong></td>
+                <td style="color:var(--muted)">{{ p.email }}</td>
+                <td style="color:var(--muted)">{{ p.phone or '—' }}</td>
+                <td><span class="badge badge-resolved">Active</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="empty"><div class="empty-icon">👥</div><p>No patients assigned yet.</p></div>
+        {% endif %}
+      </div>
     </div>
 
-    <!-- Quick Actions -->
     <div class="section-card">
-        <div class="section-header">⚙️ Quick Actions</div>
-        <div class="section-body">
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <a href="{{ url_for('index') }}" class="btn-custom">🏠 Home</a>
-                <a href="{{ url_for('logout') }}" class="btn-custom btn-custom-outline">🚪 Logout</a>
-            </div>
+      <div class="section-header">⚙️ Quick Actions</div>
+      <div class="section-body">
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+          <a href="{{ url_for('doctor_consultation') }}" class="btn btn-primary">🩺 Consultation Panel</a>
+          <a href="{{ url_for('predict_symptoms') }}" class="btn btn-outline">🔍 Symptom AI</a>
+          <a href="{{ url_for('predict_diabetes') }}" class="btn btn-outline">🩺 Diabetes AI</a>
+          <a href="{{ url_for('predict_heart') }}" class="btn btn-outline">❤️ Heart AI</a>
+          <a href="{{ url_for('recommend_drug') }}" class="btn btn-outline">💊 Drug Lookup</a>
         </div>
+        <div style="margin-top:1.5rem; padding:1rem; background:rgba(0,212,255,.06);
+          border-left:4px solid var(--primary); border-radius:8px;">
+          <div style="font-weight:700; color:var(--primary); margin-bottom:.5rem;">🤖 AI Prediction System</div>
+          <div style="font-size:.9rem; color:var(--muted);">
+            Open a patient complaint to use the built-in AI diagnosis &amp; drug recommendation engine.
+            The system analyses symptoms and predicts the most likely disease with confidence scores.
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Timestamp -->
-    <div class="timestamp">
-        Last updated: {{ data.get('timestamp', 'N/A') }}
-    </div>
+  <div class="ts">Last updated: {{ data.get('timestamp', 'N/A') }}</div>
 </div>
 
+<script>
+let allComplaints = [];
+
+async function loadComplaints() {
+  const container = document.getElementById('complaintsList');
+  try {
+    const resp = await fetch('/api/doctor/complaints');
+    const data = await resp.json();
+    allComplaints = data.complaints || [];
+
+    const pending = allComplaints.filter(c => c.status !== 'resolved').length;
+    document.getElementById('pendingCount').textContent = pending;
+
+    renderComplaints('all');
+  } catch (err) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>Error loading complaints.</p></div>`;
+  }
+}
+
+function filterComplaints(status, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderComplaints(status);
+}
+
+function renderComplaints(status) {
+  const container = document.getElementById('complaintsList');
+  const filtered = status === 'all' ? allComplaints : allComplaints.filter(c => c.status === status);
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><p>No ${status === 'all' ? '' : status+' '}complaints.</p></div>`;
+    return;
+  }
+
+  const sevClass = s => s === 'mild' ? 'sev-mild' : s === 'moderate' ? 'sev-moderate' : 'sev-severe';
+  const badgeClass = s => s === 'resolved' ? 'badge-resolved' : s === 'assigned' ? 'badge-assigned' : 'badge-pending';
+  const date = d => new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+
+  container.innerHTML = filtered.map(c => `
+    <div class="complaint-item">
+      <div class="complaint-severity ${sevClass(c.severity)}"></div>
+      <div class="complaint-info">
+        <div class="complaint-name">${c.title}</div>
+        <div class="complaint-patient">👤 ${c.patient_name} &nbsp;•&nbsp; ${date(c.created_at)} &nbsp;•&nbsp; Severity: <strong style="color:${c.severity==='severe'?'var(--danger)':c.severity==='moderate'?'var(--warning)':'var(--success)'}">${c.severity}</strong></div>
+      </div>
+      <div class="complaint-actions">
+        <span class="badge ${badgeClass(c.status)}">${c.status.charAt(0).toUpperCase()+c.status.slice(1)}</span>
+        <a href="/doctor/consultation/complaint/${c.id}" class="btn btn-success btn-sm">🩺 Review</a>
+      </div>
+    </div>`).join('');
+}
+
+loadComplaints();
+</script>
 {% endblock %}

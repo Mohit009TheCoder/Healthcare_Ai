@@ -54,7 +54,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER UNIQUE NOT NULL,
             date_of_birth DATE,
-            gender TEXT CHECK(gender IN ('Male', 'Female', 'Other')),
+            gender TEXT CHECK(gender IN ('Male', 'Female', 'Other', 'male', 'female', 'other', 'prefer_not_to_say')),
             blood_group TEXT,
             address TEXT,
             emergency_contact TEXT,
@@ -159,6 +159,11 @@ def create_user(username, email, password, role, full_name, phone=None):
         conn.close()
         return user_id
     except sqlite3.IntegrityError as e:
+        if 'UNIQUE constraint failed' in str(e):
+            return None
+        raise e
+    except Exception as e:
+        print(f"Error creating user: {e}")
         return None
 
 def authenticate_user(username, password):
@@ -241,7 +246,12 @@ def create_doctor_profile(user_id, specialization, license_number, years_experie
         conn.commit()
         conn.close()
         return True
-    except sqlite3.IntegrityError:
+    except sqlite3.IntegrityError as e:
+        print(f"Integrity error creating doctor profile for user {user_id}: {e}")
+        conn.close()
+        return False
+    except Exception as e:
+        print(f"Error creating doctor profile for user {user_id}: {e}")
         conn.close()
         return False
 
@@ -260,19 +270,24 @@ def create_patient_profile(user_id, date_of_birth=None, gender=None, blood_group
         conn.commit()
         conn.close()
         return True
-    except sqlite3.IntegrityError:
+    except sqlite3.IntegrityError as e:
+        print(f"Integrity error creating patient profile for user {user_id}: {e}")
+        conn.close()
+        return False
+    except Exception as e:
+        print(f"Error creating patient profile for user {user_id}: {e}")
         conn.close()
         return False
 
 def get_all_doctors():
-    """Get all active doctors"""
+    """Get all active doctors with qualification info"""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
     cursor.execute('''
         SELECT u.id, u.full_name, u.email, u.phone, 
-               d.specialization, d.license_number, d.years_experience
+               d.specialization, d.license_number, d.years_experience, d.qualification
         FROM users u
         JOIN doctor_profiles d ON u.id = d.user_id
         WHERE u.role = 'doctor' AND u.is_active = 1
@@ -318,7 +333,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            flash('Please log in to access this page.', 'warning')
+            flash('Login first required! Please login', 'warning')
             return redirect(url_for('login', next=request.url))
         return f(*args, **kwargs)
     return decorated_function
@@ -329,7 +344,7 @@ def role_required(*roles):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if 'user_id' not in session:
-                flash('Please log in to access this page.', 'warning')
+                flash('Login first required! Please login', 'warning')
                 return redirect(url_for('login'))
             
             if session.get('role') not in roles:
@@ -339,6 +354,48 @@ def role_required(*roles):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+# ─── AuthManager class (provides get_users_by_role, etc.) ───────────────────
+class AuthManager:
+    """Singleton auth manager for role-based queries"""
+
+    def get_users_by_role(self, role: str):
+        """Get all active users by role"""
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        if role == 'doctor':
+            cursor.execute('''
+                SELECT u.id, u.full_name, u.email, u.phone,
+                       d.specialization, d.license_number, d.years_experience, d.qualification
+                FROM users u
+                JOIN doctor_profiles d ON u.id = d.user_id
+                WHERE u.role = 'doctor' AND u.is_active = 1
+                ORDER BY u.full_name
+            ''')
+        elif role == 'patient':
+            cursor.execute('''
+                SELECT u.id, u.full_name, u.email, u.phone,
+                       p.date_of_birth, p.gender, p.blood_group
+                FROM users u
+                LEFT JOIN patient_profiles p ON u.id = p.user_id
+                WHERE u.role = 'patient' AND u.is_active = 1
+                ORDER BY u.full_name
+            ''')
+        else:
+            cursor.execute(
+                'SELECT id, username, full_name, email, role FROM users WHERE role = ? AND is_active = 1',
+                (role,)
+            )
+
+        users = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return users
+
+
+# Singleton instance
+auth_manager = AuthManager()
 
 # Initialize database on module import
 init_db()

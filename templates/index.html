@@ -11,8 +11,15 @@
     plus clinical datasets for diabetes and heart disease.
   </p>
   <div class="hero-actions">
-    <a href="{{ url_for('analytics_dashboard') }}" class="btn btn-primary">View Dashboard →</a>
-    <a href="{{ url_for('predict_symptoms') }}" class="btn btn-outline">Symptom Analysis</a>
+    {% if session.user_id %}
+      <a href="{{ url_for('dashboard_home') }}" class="btn btn-primary">My Dashboard →</a>
+    {% else %}
+      <a href="{{ url_for('analytics_dashboard') }}" class="btn btn-primary">View System Dashboard →</a>
+    {% endif %}
+    
+    {% if session.get('role') != 'patient' %}
+      <a href="{{ url_for('predict_symptoms') }}" class="btn btn-outline">Symptom Analysis</a>
+    {% endif %}
   </div>
 </section>
 
@@ -80,9 +87,10 @@
 <div class="section-gap">
   <h2 class="section-title">System Capabilities</h2>
   <div class="features-grid">
+    {% if session.get('role') != 'patient' %}
     <a href="{{ url_for('predict_symptoms') }}" class="feature-card feature-card--purple">
       <div class="feature-icon">🔍</div>
-      <div>
+      <div class="feature-content" style="flex: 1;">
         <div class="feature-title">Symptom-Based Diagnosis</div>
         <div class="feature-desc">Select from {{ stats.symptoms }} medically-validated symptoms. Ensemble model (RF + NB + LR) trained on 4,920 records across {{ stats.diseases }} disease classes. Includes disease precautions.</div>
       </div>
@@ -90,7 +98,7 @@
     </a>
     <a href="{{ url_for('predict_diabetes') }}" class="feature-card feature-card--cyan">
       <div class="feature-icon">🩸</div>
-      <div>
+      <div class="feature-content" style="flex: 1;">
         <div class="feature-title">Diabetes Prediction</div>
         <div class="feature-desc">Predict diabetes risk using glucose, BMI, insulin, blood pressure and 7 additional clinical features. Random Forest with 200 estimators.</div>
       </div>
@@ -98,7 +106,7 @@
     </a>
     <a href="{{ url_for('predict_heart') }}" class="feature-card feature-card--red">
       <div class="feature-icon">❤️</div>
-      <div>
+      <div class="feature-content" style="flex: 1;">
         <div class="feature-title">Heart Disease Prediction</div>
         <div class="feature-desc">Assess cardiovascular risk from cholesterol, blood pressure, and lifestyle factors using Gradient Boosting classifier.</div>
       </div>
@@ -106,15 +114,16 @@
     </a>
     <a href="{{ url_for('recommend_drug') }}" class="feature-card feature-card--green">
       <div class="feature-icon">💊</div>
-      <div>
+      <div class="feature-content" style="flex: 1;">
         <div class="feature-title">Drug Recommender</div>
         <div class="feature-desc">Content-based filtering with TF-IDF + cosine similarity to recommend top-rated medications by diagnosis and risk level.</div>
       </div>
       <div class="feature-arrow">Get recommendations →</div>
     </a>
-    <a href="{{ url_for('analytics_dashboard') }}" class="feature-card feature-card--cyan">
+    {% endif %}
+    <a href="{{ url_for('analytics_dashboard' if not session.user_id or session.get('role') == 'admin' else 'dashboard_home') }}" class="feature-card feature-card--cyan">
       <div class="feature-icon">📊</div>
-      <div>
+      <div class="feature-content" style="flex: 1;">
         <div class="feature-title">Analytics Dashboard</div>
         <div class="feature-desc">Interactive visualisations: symptom heatmaps, glucose profiles, risk factor analysis, and ensemble vs single-model benchmarks.</div>
       </div>

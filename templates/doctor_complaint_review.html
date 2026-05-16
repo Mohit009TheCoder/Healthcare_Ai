@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+{% block title %}Review Complaint - MediAI{% endblock %}
+{% block content %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+:root{--primary:#00d4ff;--success:#00ff9d;--danger:#ff4d6d;--warning:#ffb703;--purple:#a78bfa;--bg:#060a14;--text:#e2e8f0;--muted:rgba(226,232,240,.55);}
+*{box-sizing:border-box;}
+body{background:linear-gradient(135deg,#0a0e1a,#111827);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+.wrap{max-width:1300px;margin:0 auto;padding:2rem;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(0,212,255,.15);}
+.page-header h1{font-size:1.8rem;font-weight:800;margin:0;background:linear-gradient(135deg,var(--primary),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.1rem;border-radius:8px;font-weight:600;font-size:.88rem;cursor:pointer;transition:all .25s;border:none;text-decoration:none;font-family:inherit;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--purple));color:#060a14;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,212,255,.35);}
+.btn-success{background:linear-gradient(135deg,var(--success),#00c975);color:#060a14;}
+.btn-success:hover{transform:translateY(-2px);}
+.btn-outline{background:transparent;border:2px solid var(--primary);color:var(--primary);}
+.btn-outline:hover{background:rgba(0,212,255,.1);}
+.btn-ai{background:linear-gradient(135deg,#7c3aed,var(--purple));color:#fff;}
+.btn-ai:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(167,139,250,.4);}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+@media(max-width:900px){.grid{grid-template-columns:1fr;}}
+.card{background:rgba(13,20,36,.85);backdrop-filter:blur(12px);border:1px solid rgba(0,212,255,.15);border-radius:14px;overflow:hidden;margin-bottom:1.5rem;}
+.card-header{background:linear-gradient(135deg,rgba(0,212,255,.12),rgba(167,139,250,.12));border-bottom:1px solid rgba(0,212,255,.2);padding:1rem 1.25rem;font-weight:700;font-size:.95rem;color:var(--primary);display:flex;align-items:center;justify-content:space-between;}
+.card-body{padding:1.25rem;}
+.info-row{display:flex;gap:.5rem;margin-bottom:.6rem;font-size:.92rem;}
+.info-label{color:var(--muted);min-width:120px;flex-shrink:0;}
+.info-value{font-weight:600;}
+.badge{padding:.25rem .7rem;border-radius:20px;font-size:.78rem;font-weight:600;}
+.badge-mild{background:rgba(0,255,157,.15);color:var(--success);border:1px solid rgba(0,255,157,.3);}
+.badge-moderate{background:rgba(255,183,3,.15);color:var(--warning);border:1px solid rgba(255,183,3,.3);}
+.badge-severe{background:rgba(255,77,109,.15);color:var(--danger);border:1px solid rgba(255,77,109,.3);}
+.badge-pending{background:rgba(255,183,3,.15);color:var(--warning);}
+.badge-assigned{background:rgba(0,212,255,.15);color:var(--primary);}
+.badge-resolved{background:rgba(0,255,157,.15);color:var(--success);}
+.symptom-tag{display:inline-block;background:rgba(0,212,255,.15);color:var(--primary);border:1px solid rgba(0,212,255,.3);padding:.3rem .8rem;border-radius:20px;font-size:.82rem;margin:.2rem;}
+.form-label{display:block;margin-bottom:.6rem;font-weight:700;color:rgba(226,232,240,.8);font-size:.75rem;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:.5rem;}
+.form-label i {color:var(--primary);font-size:.9rem;}
+.form-control{width:100%;padding:.85rem 1rem;background:rgba(13,20,36,.6);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:var(--text);font-family:inherit;font-size:.95rem;transition:all .3s ease;box-shadow:inset 0 2px 4px rgba(0,0,0,.2);}
+.form-control:focus{outline:none;border-color:var(--primary);background:rgba(0,212,255,.03);box-shadow:0 0 0 3px rgba(0,212,255,.15), inset 0 2px 4px rgba(0,0,0,.2);}
+.form-control::placeholder{color:rgba(226,232,240,.3);}
+textarea.form-control{resize:vertical;min-height:110px;line-height:1.5;}
+.form-group{margin-bottom:1.5rem;}
+.btn-submit-rec{width:100%;background:linear-gradient(135deg,var(--primary),var(--success));border:none;padding:1rem;border-radius:12px;color:#060a14;font-weight:800;font-size:1.05rem;cursor:pointer;transition:all .3s ease;display:flex;align-items:center;justify-content:center;gap:.6rem;text-transform:uppercase;letter-spacing:.5px;}
+.btn-submit-rec:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(0,255,157,.25);}
+.btn-submit-rec:active{transform:translateY(0);}
+.ai-panel{background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(167,139,250,.08));border:1px solid rgba(167,139,250,.3);border-radius:12px;padding:1.25rem;margin-bottom:1.25rem;}
+.ai-panel-header{font-weight:700;color:var(--purple);margin-bottom:.8rem;font-size:1rem;}
+.disease-result{background:rgba(0,212,255,.08);border:2px solid var(--primary);border-radius:10px;padding:1rem;margin-bottom:1rem;text-align:center;}
+.disease-name{font-size:1.5rem;font-weight:800;color:var(--primary);}
+.confidence-bar-wrap{background:rgba(255,255,255,.08);border-radius:20px;height:8px;margin:.5rem 0;}
+.confidence-bar{height:8px;border-radius:20px;background:linear-gradient(90deg,var(--primary),var(--success));transition:width .8s ease;}
+.top5-item{display:flex;align-items:center;gap:.75rem;padding:.5rem 0;border-bottom:1px solid rgba(0,212,255,.08);}
+.top5-item:last-child{border-bottom:none;}
+.top5-name{flex:1;font-size:.9rem;}
+.top5-pct{font-size:.82rem;color:var(--primary);font-weight:700;min-width:45px;text-align:right;}
+.drug-card{background:rgba(0,255,157,.06);border:1px solid rgba(0,255,157,.2);border-radius:8px;padding:.9rem;margin-bottom:.75rem;display:flex;align-items:center;gap:.75rem;}
+.drug-name{font-weight:700;margin-bottom:2px;}
+.drug-meta{font-size:.8rem;color:var(--muted);}
+.drug-rating{color:var(--warning);font-weight:700;font-size:1rem;flex-shrink:0;}
+.drug-add-btn{margin-left:auto;flex-shrink:0;}
+.msg-bubble{max-width:75%;padding:.75rem 1rem;border-radius:12px;margin-bottom:.75rem;font-size:.9rem;line-height:1.5;}
+.msg-doctor{background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.2);align-self:flex-end;margin-left:auto;border-radius:12px 12px 2px 12px;}
+.msg-patient{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2);border-radius:12px 12px 12px 2px;}
+.msg-wrap{display:flex;flex-direction:column;max-height:350px;overflow-y:auto;gap:.5rem;padding:.5rem 0;}
+.msg-sender{font-size:.75rem;font-weight:700;margin-bottom:.2rem;color:var(--muted);}
+.msg-time{font-size:.72rem;color:var(--muted);margin-top:.2rem;}
+.notif{padding:.9rem 1rem;border-radius:8px;margin-bottom:1rem;display:none;font-weight:600;}
+.notif.success{background:rgba(0,255,157,.1);border:1px solid var(--success);color:var(--success);}
+.notif.error{background:rgba(255,77,109,.1);border:1px solid var(--danger);color:var(--danger);}
+.notif.show{display:block;}
+.drug-search-wrap{position:relative;}
+.drug-suggestions{position:absolute;top:100%;left:0;right:0;background:rgba(13,20,36,.97);border:1px solid rgba(0,212,255,.3);border-radius:8px;max-height:200px;overflow-y:auto;z-index:20;display:none;}
+.drug-suggestions.show{display:block;}
+.drug-sugg-item{padding:.65rem 1rem;cursor:pointer;border-bottom:1px solid rgba(0,212,255,.08);font-size:.88rem;transition:background .2s;}
+.drug-sugg-item:hover{background:rgba(0,212,255,.1);}
+.selected-drug-tag{display:inline-flex;align-items:center;gap:.4rem;background:rgba(0,255,157,.15);color:var(--success);border:1px solid rgba(0,255,157,.3);padding:.3rem .8rem;border-radius:20px;font-size:.83rem;margin:.2rem;}
+.selected-drug-tag button{background:none;border:none;color:inherit;cursor:pointer;font-weight:700;font-size:1rem;line-height:1;padding:0;}
+</style>
+
+<div class="wrap">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1>🩺 Patient Complaint Review</h1>
+      <p style="color:var(--muted);margin:.3rem 0 0;font-size:.9rem;">AI-assisted diagnosis &amp; recommendation for <strong>{{ complaint.patient_name }}</strong></p>
+    </div>
+    <a href="{{ url_for('doctor_dashboard') }}" class="btn btn-outline">← Back to Dashboard</a>
+  </div>
+
+  <div id="notifSuccess" class="notif success"></div>
+  <div id="notifError" class="notif error"></div>
+
+  <div class="grid">
+    <!-- LEFT COLUMN -->
+    <div>
+      <!-- Complaint Info -->
+      <div class="card">
+        <div class="card-header">📋 Complaint Details</div>
+        <div class="card-body">
+          <div class="info-row"><span class="info-label">Patient</span><span class="info-value">{{ complaint.patient_name }}</span></div>
+          <div class="info-row"><span class="info-label">Email</span><span class="info-value" style="color:var(--muted)">{{ complaint.patient_email }}</span></div>
+          <div class="info-row"><span class="info-label">Severity</span><span class="info-value"><span class="badge badge-{{ complaint.severity }}">{{ complaint.severity|upper }}</span></span></div>
+          <div class="info-row"><span class="info-label">Status</span><span class="info-value"><span class="badge badge-{{ complaint.status }}">{{ complaint.status|title }}</span></span></div>
+          <div class="info-row"><span class="info-label">Submitted</span><span class="info-value" style="color:var(--muted)">{{ complaint.created_at }}</span></div>
+          <div style="margin-top:1rem;">
+            <div class="info-label" style="display:block;margin-bottom:.5rem;">📝 Description</div>
+            <div style="background:rgba(0,212,255,.05);border-left:3px solid var(--primary);padding:.8rem;border-radius:6px;font-size:.9rem;line-height:1.6;">{{ complaint.description }}</div>
+          </div>
+          <div style="margin-top:1rem;">
+            <div class="info-label" style="display:block;margin-bottom:.5rem;">🔍 Reported Symptoms</div>
+            <div>{% for s in complaint.symptoms %}<span class="symptom-tag">{{ s }}</span>{% endfor %}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Prediction Panel -->
+      <div class="card">
+        <div class="card-header">
+          🤖 AI Prediction Engine
+          <button class="btn btn-ai" onclick="runAIPrediction()" id="aiBtn">⚡ Run AI Prediction</button>
+        </div>
+        <div class="card-body">
+          <div id="aiLoading" style="display:none;text-align:center;padding:1.5rem;">
+            <div style="font-size:2rem;margin-bottom:.5rem;">🔄</div>
+            <p style="color:var(--muted);">Analysing symptoms with ML model…</p>
+          </div>
+          <div id="aiResults" style="display:none;">
+            <div class="disease-result">
+              <div style="font-size:.82rem;color:var(--muted);margin-bottom:.3rem;">Primary Diagnosis</div>
+              <div class="disease-name" id="aiDisease">—</div>
+              <div style="font-size:.88rem;color:var(--muted);margin-top:.25rem;">Confidence: <strong id="aiConf" style="color:var(--success);">—</strong></div>
+              <div class="confidence-bar-wrap" style="margin-top:.5rem;"><div class="confidence-bar" id="aiConfBar" style="width:0%"></div></div>
+            </div>
+
+            <div style="margin-bottom:1rem;">
+              <div style="font-weight:700;color:var(--primary);font-size:.88rem;margin-bottom:.5rem;">Top 5 Differential Diagnoses</div>
+              <div id="aiTop5"></div>
+            </div>
+
+            <div style="margin-bottom:1rem;">
+              <div style="font-weight:700;color:var(--warning);font-size:.88rem;margin-bottom:.5rem;">⚠️ Precautions</div>
+              <div id="aiPrecautions" style="font-size:.88rem;line-height:1.7;color:var(--muted);"></div>
+            </div>
+
+            <div>
+              <div style="font-weight:700;color:var(--success);font-size:.88rem;margin-bottom:.5rem;">💊 AI-Recommended Drugs (click to add)</div>
+              <div id="aiDrugs"></div>
+            </div>
+          </div>
+          <div id="aiPlaceholder" style="text-align:center;padding:1.5rem;color:var(--muted);">
+            <div style="font-size:2.5rem;margin-bottom:.5rem;">🤖</div>
+            <p>Click <strong>Run AI Prediction</strong> to analyse the patient's symptoms using the ML model.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+      <!-- Recommendation Form -->
+      <div class="card">
+        <div class="card-header">📝 Submit Recommendation</div>
+        <div class="card-body">
+          {% if recommendations %}
+          <div style="background:rgba(0,255,157,.08);border:1px solid rgba(0,255,157,.3);border-radius:8px;padding:.9rem;margin-bottom:1.25rem;">
+            <div style="font-weight:700;color:var(--success);margin-bottom:.5rem;">✅ Previous Recommendations ({{ recommendations|length }})</div>
+            {% for r in recommendations %}
+            <div style="font-size:.88rem;color:var(--muted);margin-bottom:.25rem;">
+              Dr. {{ r.doctor_name }} — {{ r.diagnosis[:80] }}{% if r.diagnosis|length > 80 %}…{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <div class="form-group">
+            <label class="form-label"><span style="font-size:1.1rem;">🩺</span> Clinical Diagnosis</label>
+            <div class="drug-search-wrap" style="margin-bottom: .75rem;">
+              <input class="form-control" id="diseaseSearch" type="text" placeholder="Search world database for diseases to add..." autocomplete="off">
+              <div class="drug-suggestions" id="diseaseSuggestions"></div>
+            </div>
+            <textarea class="form-control" id="diagnosis" placeholder="Enter your detailed diagnosis based on symptoms, description, and AI prediction..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label"><span style="font-size:1.1rem;">💊</span> Recommended Drugs</label>
+            <div class="drug-search-wrap">
+              <input class="form-control" id="drugSearch" type="text" placeholder="Search and add drugs..." autocomplete="off">
+              <div class="drug-suggestions" id="drugSuggestions"></div>
+            </div>
+            <div id="selectedDrugTags" style="margin-top:.75rem; display:flex; flex-wrap:wrap; gap:.5rem;"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label"><span style="font-size:1.1rem;">📋</span> Treatment Plan & Advice</label>
+            <textarea class="form-control" id="treatmentPlan" placeholder="Describe the treatment plan, lifestyle changes, dietary advice, and follow-up instructions..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label"><span style="font-size:1.1rem;">📌</span> Additional Notes</label>
+            <textarea class="form-control" id="notes" placeholder="Any warnings, patient allergies to note, or special instructions..." style="min-height:80px;"></textarea>
+          </div>
+
+          <button class="btn-submit-rec" onclick="submitRecommendation()">
+            <span style="font-size:1.2rem;">✨</span> Finalize & Submit Recommendation
+          </button>
+        </div>
+      </div>
+
+      <!-- Messaging -->
+      <div class="card">
+        <div class="card-header">💬 Consultation Messages</div>
+        <div class="card-body">
+          <div class="msg-wrap" id="msgWrap">
+            {% if messages %}
+              {% for m in messages %}
+              <div>
+                {% if m.sender_role == 'doctor' %}
+                <div style="display:flex;flex-direction:column;align-items:flex-end;">
+                  <div class="msg-sender" style="text-align:right;">You (Doctor)</div>
+                  <div class="msg-bubble msg-doctor">{{ m.message }}</div>
+                  <div class="msg-time">{{ m.created_at }}</div>
+                </div>
+                {% else %}
+                <div>
+                  <div class="msg-sender">{{ m.sender_name }} (Patient)</div>
+                  <div class="msg-bubble msg-patient">{{ m.message }}</div>
+                  <div class="msg-time">{{ m.created_at }}</div>
+                </div>
+                {% endif %}
+              </div>
+              {% endfor %}
+            {% else %}
+              <div style="text-align:center;color:var(--muted);padding:1.5rem;">No messages yet. Start the consultation!</div>
+            {% endif %}
+          </div>
+          <div style="display:flex;gap:.75rem;margin-top:1rem;">
+            <input class="form-control" id="msgInput" type="text" placeholder="Type a message to the patient…" style="flex:1;">
+            <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COMPLAINT_ID = {{ complaint.id }};
+const SYMPTOMS = {{ complaint.symptoms | tojson }};
+let selectedDrugs = [];
+
+/* ── AI Prediction ── */
+async function runAIPrediction() {
+  document.getElementById('aiPlaceholder').style.display = 'none';
+  document.getElementById('aiResults').style.display = 'none';
+  document.getElementById('aiLoading').style.display = 'block';
+  document.getElementById('aiBtn').disabled = true;
+
+  try {
+    const resp = await fetch('/api/doctor/predict-symptoms', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({symptoms: SYMPTOMS})
+    });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error);
+
+    document.getElementById('aiDisease').textContent = data.disease;
+    document.getElementById('aiConf').textContent = data.confidence + '%';
+    document.getElementById('aiConfBar').style.width = data.confidence + '%';
+
+    document.getElementById('aiTop5').innerHTML = data.top5.map(d => `
+      <div class="top5-item">
+        <div class="top5-name">${d.disease}</div>
+        <div style="flex:2;background:rgba(255,255,255,.07);border-radius:20px;height:6px;overflow:hidden;">
+          <div style="width:${d.probability}%;height:6px;background:linear-gradient(90deg,var(--primary),var(--purple));border-radius:20px;"></div>
+        </div>
+        <div class="top5-pct">${d.probability}%</div>
+      </div>`).join('');
+
+    document.getElementById('aiPrecautions').innerHTML = data.precautions.map(p => `<div>• ${p}</div>`).join('');
+
+    document.getElementById('aiDrugs').innerHTML = data.drug_recs.slice(0,5).map(d => `
+      <div class="drug-card">
+        <div style="flex:1;">
+          <div class="drug-name">${d.name}</div>
+          <div class="drug-meta">Effectiveness: ${d.effectiveness} &nbsp;|&nbsp; Side effects: ${d.side_effects}</div>
+        </div>
+        <div class="drug-rating">⭐ ${d.rating}</div>
+        <button class="btn btn-outline drug-add-btn" style="font-size:.8rem;padding:.3rem .7rem;" onclick="addDrug('${d.name}')">+ Add</button>
+      </div>`).join('');
+
+    // Pre-fill diagnosis
+    if (!document.getElementById('diagnosis').value) {
+      document.getElementById('diagnosis').value = `AI Predicted: ${data.disease} (Confidence: ${data.confidence}%)\n\nDifferential diagnoses: ${data.top5.slice(1).map(d=>d.disease).join(', ')}\n\n[Doctor to review and confirm]`;
+    }
+
+    // Auto-add top 2 drugs
+    if (data.drug_recs && data.drug_recs.length > 0) {
+      data.drug_recs.slice(0, 2).forEach(d => addDrug(d.name));
+      showNotif('success', `🤖 AI automatically recommended ${data.drug_recs.slice(0,2).length} drug(s) based on the diagnosis.`);
+    }
+
+    // Pre-fill treatment plan
+    if (!document.getElementById('treatmentPlan').value) {
+      document.getElementById('treatmentPlan').value = `Recommended Precautions:\n${data.precautions.map(p => '• ' + p).join('\n')}\n\nFollow-up: Required in 7 days.\n\n[Doctor to review and finalize]`;
+    }
+
+    document.getElementById('aiLoading').style.display = 'none';
+    document.getElementById('aiResults').style.display = 'block';
+  } catch (err) {
+    document.getElementById('aiLoading').style.display = 'none';
+    document.getElementById('aiPlaceholder').style.display = 'block';
+    showNotif('error', 'AI Prediction failed: ' + err.message);
+  }
+  document.getElementById('aiBtn').disabled = false;
+}
+
+/* ── Disease Search ── */
+document.getElementById('diseaseSearch').addEventListener('input', async (e) => {
+  const q = e.target.value.trim();
+  const sug = document.getElementById('diseaseSuggestions');
+  if (q.length < 2) { sug.classList.remove('show'); return; }
+  try {
+    const resp = await fetch(`/api/diseases/search?q=${encodeURIComponent(q)}`);
+    const data = await resp.json();
+    if (data.diseases && data.diseases.length > 0) {
+      sug.innerHTML = data.diseases.map(d => `<div class="drug-sugg-item" onclick="addDisease('${d.name.replace(/'/g, "\\'")}')"><strong>${d.name}</strong></div>`).join('');
+      sug.classList.add('show');
+    } else {
+      sug.innerHTML = '<div class="drug-sugg-item" style="color:var(--muted);">No results found</div>';
+      sug.classList.add('show');
+    }
+  } catch(err) {}
+});
+
+function addDisease(name) {
+  const diagField = document.getElementById('diagnosis');
+  let currentVal = diagField.value.trim();
+  if (currentVal) {
+     diagField.value = currentVal + '\\n\\nConfirmed Disease: ' + name;
+  } else {
+     diagField.value = 'Confirmed Disease: ' + name;
+  }
+  document.getElementById('diseaseSearch').value = '';
+  document.getElementById('diseaseSuggestions').classList.remove('show');
+}
+
+/* ── Drug Search ── */
+document.getElementById('drugSearch').addEventListener('input', async (e) => {
+  const q = e.target.value.trim();
+  const sug = document.getElementById('drugSuggestions');
+  if (q.length < 2) { sug.classList.remove('show'); return; }
+  try {
+    const resp = await fetch(`/api/drugs/search?q=${encodeURIComponent(q)}`);
+    const data = await resp.json();
+    if (data.drugs && data.drugs.length > 0) {
+      sug.innerHTML = data.drugs.map(d => `<div class="drug-sugg-item" onclick="addDrug('${d.drug_name.replace(/'/g, "\\'")}')"><strong>${d.drug_name}</strong><br><small style="color:var(--muted)">${d.dosage || ''}</small></div>`).join('');
+      sug.classList.add('show');
+    } else {
+      sug.innerHTML = '<div class="drug-sugg-item" style="color:var(--muted);">No results found</div>';
+      sug.classList.add('show');
+    }
+  } catch(err) {}
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.drug-search-wrap')) {
+    document.getElementById('drugSuggestions').classList.remove('show');
+    const dSug = document.getElementById('diseaseSuggestions');
+    if(dSug) dSug.classList.remove('show');
+  }
+});
+
+function addDrug(name) {
+  if (!selectedDrugs.includes(name)) { selectedDrugs.push(name); renderDrugs(); }
+  document.getElementById('drugSearch').value = '';
+  document.getElementById('drugSuggestions').classList.remove('show');
+}
+
+function removeDrug(name) {
+  selectedDrugs = selectedDrugs.filter(d => d !== name);
+  renderDrugs();
+}
+
+function renderDrugs() {
+  document.getElementById('selectedDrugTags').innerHTML = selectedDrugs.map(d =>
+    `<span class="selected-drug-tag">${d} <button onclick="removeDrug('${d}')">×</button></span>`
+  ).join('');
+}
+
+/* ── Submit Recommendation ── */
+async function submitRecommendation() {
+  const diagnosis = document.getElementById('diagnosis').value.trim();
+  const treatmentPlan = document.getElementById('treatmentPlan').value.trim();
+  const notes = document.getElementById('notes').value.trim();
+
+  if (!diagnosis || !treatmentPlan) { showNotif('error','Please fill in Diagnosis and Treatment Plan.'); return; }
+  if (selectedDrugs.length === 0) { showNotif('error','Please add at least one recommended drug.'); return; }
+
+  try {
+    const resp = await fetch('/api/doctor/recommendation', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({complaint_id: COMPLAINT_ID, diagnosis, recommended_drugs: selectedDrugs, treatment_plan: treatmentPlan, notes})
+    });
+    const data = await resp.json();
+    if (data.success) {
+      showNotif('success', '✅ Recommendation submitted successfully! Complaint marked as resolved.');
+      document.getElementById('diagnosis').value = '';
+      document.getElementById('treatmentPlan').value = '';
+      document.getElementById('notes').value = '';
+      selectedDrugs = [];
+      renderDrugs();
+    } else {
+      showNotif('error', data.error || 'Failed to submit');
+    }
+  } catch(err) {
+    showNotif('error', 'Error: ' + err.message);
+  }
+}
+
+/* ── Messaging ── */
+async function sendMessage() {
+  const inp = document.getElementById('msgInput');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  try {
+    const resp = await fetch('/api/doctor/send-message', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({complaint_id: COMPLAINT_ID, message: msg})
+    });
+    const data = await resp.json();
+    if (data.success) {
+      inp.value = '';
+      const wrap = document.getElementById('msgWrap');
+      const now = new Date().toLocaleString();
+      wrap.innerHTML += `<div style="display:flex;flex-direction:column;align-items:flex-end;">
+        <div class="msg-sender" style="text-align:right;">You (Doctor)</div>
+        <div class="msg-bubble msg-doctor">${msg}</div>
+        <div class="msg-time">${now}</div>
+      </div>`;
+      wrap.scrollTop = wrap.scrollHeight;
+    }
+  } catch(err) {}
+}
+
+document.getElementById('msgInput').addEventListener('keydown', (e) => { if(e.key === 'Enter') sendMessage(); });
+
+function showNotif(type, msg) {
+  const el = document.getElementById(type === 'success' ? 'notifSuccess' : 'notifError');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 6000);
+}
+</script>
+{% endblock %}
